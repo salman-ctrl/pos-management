@@ -1,27 +1,45 @@
-import { Calendar, Download, TrendingUp, DollarSign, ShoppingBag, CreditCard } from 'lucide-react';
-import SalesChart from '@/components/SalesChart'; // Reuse Chart Component
-import StatCard from '@/components/StatCard'; // Reuse StatCard Component
+"use client";
+
+import { useState } from 'react';
+import { Calendar, Download, TrendingUp, DollarSign, ShoppingBag, CreditCard, ChevronDown, PieChart, BarChart3, Activity } from 'lucide-react';
+import SalesChart from '@/components/SalesChart';
+import StatCard from '@/components/StatCard';
 
 export default function ReportsPage() {
+  const [dateRange, setDateRange] = useState('Jan 2026');
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
+      {/* Header & Actions */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Laporan Penjualan</h2>
-          <p className="text-gray-400 text-sm">Analisis performa bisnis Anda.</p>
+          <h2 className="text-2xl font-bold text-gray-800">Laporan & Analitik</h2>
+          <p className="text-gray-400 text-sm">Insight performa bisnis secara real-time.</p>
         </div>
         
         <div className="flex gap-2">
-           <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium">
-             <Calendar size={16} /> Jan 2026
-           </button>
-           <button className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl hover:bg-orange-600 shadow-sm transition-colors text-sm font-medium">
-             <Download size={16} /> Export Excel
+           <div className="relative group">
+             <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium">
+               <Calendar size={16} /> {dateRange} <ChevronDown size={14} />
+             </button>
+             {/* Dropdown Dummy */}
+             <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-100 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all z-10">
+                <div className="py-1">
+                    {['Jan 2026', 'Dec 2025', 'Nov 2025'].map((m) => (
+                        <button key={m} onClick={() => setDateRange(m)} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-orange-500">
+                            {m}
+                        </button>
+                    ))}
+                </div>
+             </div>
+           </div>
+           <button className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl hover:bg-orange-600 shadow-sm shadow-orange-200 transition-colors text-sm font-medium">
+             <Download size={16} /> Export
            </button>
         </div>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Stats (Top Bento Row) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard 
           title="Total Pendapatan" 
@@ -50,84 +68,136 @@ export default function ReportsPage() {
         />
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Chart */}
-        <div className="card-base p-6 lg:col-span-2">
-          <h3 className="font-bold text-gray-800 mb-6">Tren Penjualan Harian</h3>
-          <div className="h-80">
+      {/* Bento Layout Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 auto-rows-min">
+        
+        {/* 1. Main Chart (Large Block - 2 Col) */}
+        <div className="card-base p-6 lg:col-span-2 lg:row-span-2 flex flex-col">
+          <div className="flex justify-between items-center mb-6">
+             <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                <Activity size={20} className="text-orange-500" />
+                Tren Penjualan Harian
+             </h3>
+             <div className="flex gap-2">
+                <span className="flex items-center gap-1 text-xs font-medium text-gray-500">
+                    <div className="w-2 h-2 rounded-full bg-orange-500"></div> Revenue
+                </span>
+             </div>
+          </div>
+          <div className="flex-1 min-h-[300px]">
             <SalesChart />
           </div>
         </div>
 
-        {/* Top Products & Payment Methods */}
-        <div className="space-y-6">
-           {/* Top Products */}
-           <div className="card-base p-6">
-             <h3 className="font-bold text-gray-800 mb-4">Produk Terlaris</h3>
-             <div className="space-y-4">
-               {[
-                 { name: 'Kopi Susu Gula Aren', sold: 450, revenue: '8.1jt' },
-                 { name: 'Croissant Butter', sold: 210, revenue: '5.2jt' },
-                 { name: 'Ice Lychee Tea', sold: 180, revenue: '3.6jt' },
-                 { name: 'Dimsum Ayam', sold: 150, revenue: '3.0jt' },
-               ].map((item, i) => (
-                 <div key={i} className="flex items-center justify-between pb-3 border-b border-gray-50 last:border-0 last:pb-0">
-                   <div className="flex items-center gap-3">
-                     <span className="w-6 h-6 rounded bg-gray-100 text-gray-500 flex items-center justify-center text-xs font-bold">
-                       {i + 1}
-                     </span>
-                     <div>
-                       <p className="text-sm font-medium text-gray-800">{item.name}</p>
-                       <p className="text-xs text-gray-400">{item.sold} terjual</p>
-                     </div>
-                   </div>
-                   <span className="text-sm font-semibold text-gray-700">Rp {item.revenue}</span>
-                 </div>
-               ))}
-             </div>
+        {/* 2. Top Products (Tall Block - 1 Col) */}
+        <div className="card-base p-0 overflow-hidden lg:row-span-2 flex flex-col">
+           <div className="p-5 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+             <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                <BarChart3 size={18} className="text-orange-500" />
+                Produk Terlaris
+             </h3>
+             <button className="text-xs text-orange-500 font-medium hover:underline">Lihat Semua</button>
            </div>
-
-           {/* Payment Methods */}
-           <div className="card-base p-6">
-             <h3 className="font-bold text-gray-800 mb-4">Metode Pembayaran</h3>
-             <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <CreditCard size={16} /> QRIS
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-orange-500 w-[65%]"></div>
-                    </div>
-                    <span className="text-xs font-medium">65%</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <DollarSign size={16} /> Tunai
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-green-500 w-[25%]"></div>
-                    </div>
-                    <span className="text-xs font-medium">25%</span>
-                  </div>
-                </div>
-                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <CreditCard size={16} /> Debit
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-500 w-[10%]"></div>
-                    </div>
-                    <span className="text-xs font-medium">10%</span>
-                  </div>
-                </div>
-             </div>
+           
+           <div className="p-5 space-y-5 flex-1 overflow-y-auto max-h-[400px]">
+             {[
+               { name: 'Kemeja Flanel Vintage', sold: 450, revenue: '85.5jt', img: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=100&auto=format&fit=crop&q=60' },
+               { name: 'Sneakers Putih Casual', sold: 210, revenue: '62.7jt', img: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=100&auto=format&fit=crop&q=60' },
+               { name: 'Jaket Denim Oversized', sold: 180, revenue: '81.0jt', img: 'https://images.unsplash.com/photo-1551537482-f2075a1d41f2?w=100&auto=format&fit=crop&q=60' },
+               { name: 'Kaos Polos Hitam', sold: 150, revenue: '12.7jt', img: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=100&auto=format&fit=crop&q=60' },
+               { name: 'Celana Chino Slim Fit', sold: 120, revenue: '30.0jt', img: 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=100&auto=format&fit=crop&q=60' },
+             ].map((item, i) => (
+               <div key={i} className="flex items-center justify-between group">
+                 <div className="flex items-center gap-3">
+                   <div className="relative">
+                       <img src={item.img} alt={item.name} className="w-10 h-10 rounded-lg object-cover border border-gray-100" />
+                       <span className="absolute -top-2 -left-2 w-5 h-5 rounded-full bg-gray-800 text-white flex items-center justify-center text-[10px] font-bold shadow-md">
+                         {i + 1}
+                       </span>
+                   </div>
+                   <div>
+                     <p className="text-sm font-bold text-gray-800 line-clamp-1">{item.name}</p>
+                     <p className="text-xs text-gray-400 font-medium">{item.sold} terjual</p>
+                   </div>
+                 </div>
+                 <div className="text-right">
+                    <span className="text-sm font-bold text-gray-700 block">Rp {item.revenue}</span>
+                    <span className="text-[10px] text-green-500 font-medium">+12%</span>
+                 </div>
+               </div>
+             ))}
            </div>
         </div>
+
+        {/* 3. Payment Methods (Wide Block - 2 Col) */}
+        <div className="card-base p-6 lg:col-span-2">
+           <h3 className="font-bold text-gray-800 mb-6 flex items-center gap-2">
+             <PieChart size={20} className="text-orange-500" />
+             Metode Pembayaran
+           </h3>
+           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                {/* QRIS */}
+                <div className="p-4 rounded-2xl bg-orange-50 border border-orange-100 relative overflow-hidden group">
+                    <div className="flex justify-between items-start mb-2 relative z-10">
+                        <div className="p-2 bg-white rounded-lg text-orange-600 shadow-sm">
+                            <CreditCard size={20} />
+                        </div>
+                        <span className="text-xs font-bold text-orange-600 bg-white px-2 py-1 rounded-full">65%</span>
+                    </div>
+                    <p className="text-gray-500 text-xs font-medium relative z-10">QRIS / E-Wallet</p>
+                    <p className="text-lg font-bold text-gray-800 relative z-10">Rp 29.3jt</p>
+                    {/* Background Icon Decoration */}
+                    <CreditCard className="absolute -bottom-4 -right-4 text-orange-200 opacity-20 w-24 h-24 transform -rotate-12" />
+                </div>
+
+                {/* Tunai */}
+                <div className="p-4 rounded-2xl bg-green-50 border border-green-100 relative overflow-hidden">
+                    <div className="flex justify-between items-start mb-2 relative z-10">
+                        <div className="p-2 bg-white rounded-lg text-green-600 shadow-sm">
+                            <DollarSign size={20} />
+                        </div>
+                        <span className="text-xs font-bold text-green-600 bg-white px-2 py-1 rounded-full">25%</span>
+                    </div>
+                    <p className="text-gray-500 text-xs font-medium relative z-10">Tunai (Cash)</p>
+                    <p className="text-lg font-bold text-gray-800 relative z-10">Rp 11.3jt</p>
+                    <DollarSign className="absolute -bottom-4 -right-4 text-green-200 opacity-20 w-24 h-24 transform -rotate-12" />
+                </div>
+
+                {/* Debit */}
+                <div className="p-4 rounded-2xl bg-blue-50 border border-blue-100 relative overflow-hidden">
+                    <div className="flex justify-between items-start mb-2 relative z-10">
+                        <div className="p-2 bg-white rounded-lg text-blue-600 shadow-sm">
+                            <CreditCard size={20} />
+                        </div>
+                        <span className="text-xs font-bold text-blue-600 bg-white px-2 py-1 rounded-full">10%</span>
+                    </div>
+                    <p className="text-gray-500 text-xs font-medium relative z-10">Kartu Debit</p>
+                    <p className="text-lg font-bold text-gray-800 relative z-10">Rp 4.5jt</p>
+                    <CreditCard className="absolute -bottom-4 -right-4 text-blue-200 opacity-20 w-24 h-24 transform -rotate-12" />
+                </div>
+           </div>
+        </div>
+
+        {/* 4. Sales Target (Small Block - 1 Col) */}
+        <div className="card-base p-6 flex flex-col justify-center bg-gradient-to-br from-gray-900 to-gray-800 text-white relative overflow-hidden">
+            <h3 className="font-bold text-lg mb-1 relative z-10">Target Bulanan</h3>
+            <p className="text-gray-400 text-xs mb-4 relative z-10">Deadline: 31 Jan 2026</p>
+            
+            <div className="relative z-10">
+                <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-300">Progress</span>
+                    <span className="font-bold text-orange-400">82%</span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div className="bg-orange-500 h-2 rounded-full" style={{ width: '82%' }}></div>
+                </div>
+                <p className="text-xs text-gray-400 mt-3">Kurang <span className="text-white font-bold">Rp 4.8jt</span> lagi untuk mencapai target.</p>
+            </div>
+
+            {/* Decorative Circle */}
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
+        </div>
+
       </div>
     </div>
   );

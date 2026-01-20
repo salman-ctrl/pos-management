@@ -14,31 +14,31 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
           title="Total Penjualan" 
-          value="Rp 5.240.000" 
+          value="Rp 8.240.000" 
           subtitle="vs hari kemarin" 
           icon={DollarSign}
           trend="up"
-          trendValue="+12.5%"
+          trendValue="+15.3%"
         />
         <StatCard 
           title="Transaksi" 
-          value="48" 
+          value="62" 
           subtitle="struk tercetak" 
           icon={ShoppingCart}
           trend="up"
-          trendValue="+5"
+          trendValue="+8"
         />
          <StatCard 
           title="Gross Profit" 
-          value="Rp 1.850.000" 
-          subtitle="Margin ~35%" 
+          value="Rp 3.150.000" 
+          subtitle="Margin ~38%" 
           icon={TrendingUp}
           trend="up"
           trendValue="Aman"
         />
         <StatCard 
           title="Stok Menipis" 
-          value="3 Item" 
+          value="2 Item" 
           subtitle="Perlu restock segera" 
           icon={AlertTriangle}
           trend="down"
@@ -48,7 +48,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 2. Main Chart Area (Menggunakan SalesChart dari Chart.js) */}
+        {/* 2. Main Chart Area */}
         <div className="card-base p-6 lg:col-span-2 min-h-[400px]">
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-semibold text-lg text-gray-800">Analitik Penjualan</h3>
@@ -64,7 +64,7 @@ export default function Dashboard() {
 
         {/* 3. Right Sidebar: Low Stock & Top Products */}
         <div className="space-y-6">
-          {/* Low Stock Alert */}
+          {/* Low Stock Alert (Fashion Theme) */}
           <div className="card-base p-5">
             <div className="flex items-center gap-2 mb-4 text-red-500 font-medium">
               <AlertTriangle size={18} />
@@ -72,9 +72,8 @@ export default function Dashboard() {
             </div>
             <div className="space-y-3">
               {[
-                { name: 'Kopi Susu Gula Aren', stock: 2, unit: 'Cup' },
-                { name: 'Roti Bakar Coklat', stock: 0, unit: 'Porsi' },
-                { name: 'Air Mineral 600ml', stock: 5, unit: 'Btl' },
+                { name: 'Kemeja Flanel Vtg', stock: 4, unit: 'Pcs' },
+                { name: 'Sneakers Putih', stock: 0, unit: 'Psg' },
               ].map((item, idx) => (
                 <div key={idx} className="flex justify-between items-center p-3 bg-red-50 rounded-xl border border-red-100">
                   <div className="text-sm">
@@ -89,19 +88,35 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Top Selling */}
+          {/* Top Selling (Fashion Theme with Images) */}
           <div className="card-base p-5">
              <h3 className="font-semibold text-gray-800 mb-4">Produk Terlaris</h3>
              <div className="space-y-4">
                {[
-                 { name: 'Nasi Goreng Spesial', sold: 124 },
-                 { name: 'Es Teh Manis', sold: 98 },
-                 { name: 'Ayam Geprek', sold: 85 },
+                 { 
+                    name: 'Kaos Polos Hitam', 
+                    sold: 124, 
+                    img: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=100&auto=format&fit=crop&q=60' 
+                 },
+                 { 
+                    name: 'Celana Jeans Navy', 
+                    sold: 98, 
+                    img: 'https://images.unsplash.com/photo-1542272454315-4c01d7abdf4a?w=100&auto=format&fit=crop&q=60' 
+                 },
+                 { 
+                    name: 'Jaket Denim', 
+                    sold: 85, 
+                    img: 'https://images.unsplash.com/photo-1551537482-f2075a1d41f2?w=100&auto=format&fit=crop&q=60' 
+                 },
                ].map((item, idx) => (
                  <div key={idx} className="flex items-center justify-between">
                    <div className="flex items-center gap-3">
-                     <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500">
-                       {idx + 1}
+                     {/* Image Thumbnail */}
+                     <div className="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden flex-shrink-0 relative">
+                        <img src={item.img} alt={item.name} className="w-full h-full object-cover" />
+                        <div className="absolute bottom-0 right-0 bg-orange-500 text-white text-[9px] font-bold px-1 rounded-tl-md">
+                            #{idx + 1}
+                        </div>
                      </div>
                      <span className="text-sm font-medium text-gray-700">{item.name}</span>
                    </div>
@@ -132,9 +147,9 @@ export default function Dashboard() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {[
-                { inv: 'INV-00123', cashier: 'Budi Santoso', time: '14:20', total: 'Rp 45.000', status: 'PAID' },
-                { inv: 'INV-00122', cashier: 'Siti Aminah', time: '14:15', total: 'Rp 120.000', status: 'PAID' },
-                { inv: 'INV-00121', cashier: 'Budi Santoso', time: '13:58', total: 'Rp 32.500', status: 'PENDING' },
+                { inv: 'INV-00123', cashier: 'Budi Santoso', time: '14:20', total: 'Rp 450.000', status: 'PAID' },
+                { inv: 'INV-00122', cashier: 'Siti Aminah', time: '14:15', total: 'Rp 1.200.000', status: 'PAID' },
+                { inv: 'INV-00121', cashier: 'Budi Santoso', time: '13:58', total: 'Rp 85.000', status: 'PENDING' },
                 { inv: 'INV-00120', cashier: 'Siti Aminah', time: '13:45', total: 'Rp 210.000', status: 'PAID' },
               ].map((row, i) => (
                 <tr key={i} className="hover:bg-gray-50 transition-colors">
