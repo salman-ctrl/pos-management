@@ -1,26 +1,58 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@layer theme {
+  :root, :host {
+    --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    
+    /* User Custom Colors */
+    --color-red-50: oklch(.971 .013 17.38);
+    --color-red-300: oklch(.808 .114 19.571);
+    --color-red-400: oklch(.704 .191 22.216);
+    --color-red-500: oklch(.637 .237 25.331);
+    
+    --color-orange-50: oklch(.98 .02 66.29); 
+    --color-orange-300: oklch(.837 .128 66.29);
+    --color-orange-400: oklch(.75 .183 55.934);
+    --color-orange-500: oklch(.705 .213 47.604);
+    --color-orange-600: oklch(.60 .20 47.604); 
+
+    --color-gray-50: oklch(.985 .002 264.542);
+    --color-gray-100: oklch(.967 .003 264.542);
+    --color-gray-200: oklch(.92 .005 264.542);
+    --color-gray-400: oklch(.707 .022 261.325);
+    --color-gray-500: oklch(.55 .022 261.325);
+    --color-gray-800: oklch(.30 .022 261.325);
+    
+    --color-white: #fff;
+
+    /* Semantic Mappings */
+    --color-primary: var(--color-orange-500);
+    --color-primary-hover: var(--color-orange-600);
+    --color-bg-main: var(--color-gray-50);
+    --color-card: var(--color-white);
+    
+    --spacing: .25rem;
+    --radius-2xl: 1rem;
+    
+    /* Transitions */
+    --ease-in-out: cubic-bezier(.4, 0, .2, 1);
+    --default-transition-duration: .15s;
+  }
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Custom Utilities for clean UI */
+@layer utilities {
+  .card-base {
+    background-color: var(--color-card);
+    border-radius: var(--radius-2xl);
+    border: 1px solid var(--color-gray-200);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-bg-main);
+  font-family: var(--font-sans);
+  color: var(--color-gray-800);
 }
