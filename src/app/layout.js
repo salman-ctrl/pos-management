@@ -8,8 +8,19 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="id">
-      <body className="antialiased bg-gray-50 text-gray-900">
-        {children}
+      {/* Kita biarkan body bersih (hanya antialiased).
+        suppressHydrationWarning tetap dipasang untuk jaga-jaga.
+      */}
+      <body 
+        className="antialiased" 
+        suppressHydrationWarning={true}
+      >
+        {/* Pindahkan warna background dan text ke div wrapper ini.
+          Ini membuat React lebih stabil karena div ini tidak akan disentuh oleh ekstensi browser.
+        */}
+        <div className="min-h-screen bg-gray-50 text-gray-900">
+          {children}
+        </div>
       </body>
     </html>
   );

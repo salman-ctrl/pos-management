@@ -1,4 +1,4 @@
-import { DollarSign, ShoppingCart, TrendingUp, AlertTriangle } from 'lucide-react';
+import { DollarSign, ShoppingCart, TrendingUp, AlertTriangle, Utensils } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 import SalesChart from '@/components/SalesChart';
 
@@ -6,8 +6,8 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Dashboard</h2>
-        <p className="text-gray-500 text-sm">Overview performa toko hari ini.</p>
+        <h2 className="text-2xl font-bold text-gray-800">Dashboard Restoran</h2>
+        <p className="text-gray-500 text-sm">Overview operasional & penjualan hari ini.</p>
       </div>
 
       {/* 1. Header Stats */}
@@ -21,25 +21,25 @@ export default function Dashboard() {
           trendValue="+15.3%"
         />
         <StatCard 
-          title="Transaksi" 
+          title="Pesanan Selesai" 
           value="62" 
-          subtitle="struk tercetak" 
-          icon={ShoppingCart}
+          subtitle="Meja dilayani" 
+          icon={Utensils}
           trend="up"
           trendValue="+8"
         />
          <StatCard 
           title="Gross Profit" 
           value="Rp 3.150.000" 
-          subtitle="Margin ~38%" 
+          subtitle="Food Cost ~38%" 
           icon={TrendingUp}
           trend="up"
           trendValue="Aman"
         />
         <StatCard 
           title="Stok Menipis" 
-          value="2 Item" 
-          subtitle="Perlu restock segera" 
+          value="3 Item" 
+          subtitle="Bahan baku kritis" 
           icon={AlertTriangle}
           trend="down"
           trendValue="Warning"
@@ -51,7 +51,7 @@ export default function Dashboard() {
         {/* 2. Main Chart Area */}
         <div className="card-base p-6 lg:col-span-2 min-h-[400px]">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="font-semibold text-lg text-gray-800">Analitik Penjualan</h3>
+            <h3 className="font-semibold text-lg text-gray-800">Analitik Pendapatan</h3>
             <select className="bg-gray-50 border border-gray-200 text-sm rounded-lg px-3 py-2 outline-none focus:border-orange-500">
               <option>7 Hari Terakhir</option>
               <option>Bulan Ini</option>
@@ -64,16 +64,17 @@ export default function Dashboard() {
 
         {/* 3. Right Sidebar: Low Stock & Top Products */}
         <div className="space-y-6">
-          {/* Low Stock Alert (Fashion Theme) */}
+          {/* Low Stock Alert (Kitchen Theme) */}
           <div className="card-base p-5">
             <div className="flex items-center gap-2 mb-4 text-red-500 font-medium">
               <AlertTriangle size={18} />
-              <h3>Perhatian Stok</h3>
+              <h3>Stok Dapur Menipis</h3>
             </div>
             <div className="space-y-3">
               {[
-                { name: 'Kemeja Flanel Vtg', stock: 4, unit: 'Pcs' },
-                { name: 'Sneakers Putih', stock: 0, unit: 'Psg' },
+                { name: 'Susu Fresh Milk', stock: 2, unit: 'Ltr' },
+                { name: 'Biji Kopi Arabica', stock: 0.5, unit: 'Kg' },
+                { name: 'Ayam Fillet', stock: 0, unit: 'Pack' },
               ].map((item, idx) => (
                 <div key={idx} className="flex justify-between items-center p-3 bg-red-50 rounded-xl border border-red-100">
                   <div className="text-sm">
@@ -88,25 +89,25 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Top Selling (Fashion Theme with Images) */}
+          {/* Top Selling (Food Theme) */}
           <div className="card-base p-5">
-             <h3 className="font-semibold text-gray-800 mb-4">Produk Terlaris</h3>
+             <h3 className="font-semibold text-gray-800 mb-4">Menu Terlaris</h3>
              <div className="space-y-4">
                {[
                  { 
-                    name: 'Kaos Polos Hitam', 
-                    sold: 124, 
-                    img: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=100&auto=format&fit=crop&q=60' 
+                   name: 'Nasi Goreng Spesial', 
+                   sold: 124, 
+                   img: 'https://ik.imagekit.io/dcjlghyytp1/https://sayurbox-blog-stage.s3.amazonaws.com/uploads/2020/07/fried-2509089_1920.jpg?tr=f-auto' 
                  },
                  { 
-                    name: 'Celana Jeans Navy', 
-                    sold: 98, 
-                    img: 'https://images.unsplash.com/photo-1542272454315-4c01d7abdf4a?w=100&auto=format&fit=crop&q=60' 
+                   name: 'Es Kopi Susu Aren', 
+                   sold: 98, 
+                   img: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=100&auto=format&fit=crop&q=60' 
                  },
                  { 
-                    name: 'Jaket Denim', 
-                    sold: 85, 
-                    img: 'https://images.unsplash.com/photo-1551537482-f2075a1d41f2?w=100&auto=format&fit=crop&q=60' 
+                   name: 'Steak Sapi Lada Hitam', 
+                   sold: 85, 
+                   img: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=100&auto=format&fit=crop&q=60' 
                  },
                ].map((item, idx) => (
                  <div key={idx} className="flex items-center justify-between">
@@ -118,9 +119,9 @@ export default function Dashboard() {
                             #{idx + 1}
                         </div>
                      </div>
-                     <span className="text-sm font-medium text-gray-700">{item.name}</span>
+                     <span className="text-sm font-medium text-gray-700 truncate max-w-[120px]">{item.name}</span>
                    </div>
-                   <span className="text-sm text-gray-500">{item.sold} terjual</span>
+                   <span className="text-sm text-gray-500">{item.sold} porsi</span>
                  </div>
                ))}
              </div>
@@ -138,29 +139,31 @@ export default function Dashboard() {
           <table className="w-full text-sm text-left">
             <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
               <tr>
-                <th className="px-6 py-4 font-medium">Invoice</th>
-                <th className="px-6 py-4 font-medium">Kasir</th>
-                <th className="px-6 py-4 font-medium">Waktu</th>
+                <th className="px-6 py-4 font-medium">Order ID</th>
+                <th className="px-6 py-4 font-medium">Server/Kasir</th>
+                <th className="px-6 py-4 font-medium">Tipe</th>
                 <th className="px-6 py-4 font-medium">Total</th>
                 <th className="px-6 py-4 font-medium">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {[
-                { inv: 'INV-00123', cashier: 'Budi Santoso', time: '14:20', total: 'Rp 450.000', status: 'PAID' },
-                { inv: 'INV-00122', cashier: 'Siti Aminah', time: '14:15', total: 'Rp 1.200.000', status: 'PAID' },
-                { inv: 'INV-00121', cashier: 'Budi Santoso', time: '13:58', total: 'Rp 85.000', status: 'PENDING' },
-                { inv: 'INV-00120', cashier: 'Siti Aminah', time: '13:45', total: 'Rp 210.000', status: 'PAID' },
+                { id: '#ORD-224', staff: 'Budi Santoso', type: 'Dine-In (Meja 4)', total: 'Rp 450.000', status: 'PAID' },
+                { id: '#ORD-223', staff: 'Siti Aminah', type: 'Takeaway', total: 'Rp 1.200.000', status: 'PAID' },
+                { id: '#ORD-222', staff: 'Budi Santoso', type: 'Dine-In (Meja 7)', total: 'Rp 85.000', status: 'KITCHEN' },
+                { id: '#ORD-221', staff: 'Siti Aminah', type: 'Dine-In (Meja 2)', total: 'Rp 210.000', status: 'PAID' },
               ].map((row, i) => (
                 <tr key={i} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-gray-800">{row.inv}</td>
-                  <td className="px-6 py-4 text-gray-500">{row.cashier}</td>
-                  <td className="px-6 py-4 text-gray-500">{row.time}</td>
+                  <td className="px-6 py-4 font-medium text-gray-800">{row.id}</td>
+                  <td className="px-6 py-4 text-gray-500">{row.staff}</td>
+                  <td className="px-6 py-4 text-gray-500">{row.type}</td>
                   <td className="px-6 py-4 font-medium text-gray-800">{row.total}</td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       row.status === 'PAID' 
                         ? 'bg-green-100 text-green-600' 
+                        : row.status === 'KITCHEN'
+                        ? 'bg-orange-100 text-orange-600'
                         : 'bg-yellow-100 text-yellow-600'
                     }`}>
                       {row.status}

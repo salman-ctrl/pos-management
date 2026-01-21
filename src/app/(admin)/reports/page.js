@@ -100,13 +100,38 @@ export default function ReportsPage() {
            </div>
            
            <div className="p-5 space-y-5 flex-1 overflow-y-auto max-h-[400px]">
-             {[
-               { name: 'Kemeja Flanel Vintage', sold: 450, revenue: '85.5jt', img: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=100&auto=format&fit=crop&q=60' },
-               { name: 'Sneakers Putih Casual', sold: 210, revenue: '62.7jt', img: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=100&auto=format&fit=crop&q=60' },
-               { name: 'Jaket Denim Oversized', sold: 180, revenue: '81.0jt', img: 'https://images.unsplash.com/photo-1551537482-f2075a1d41f2?w=100&auto=format&fit=crop&q=60' },
-               { name: 'Kaos Polos Hitam', sold: 150, revenue: '12.7jt', img: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=100&auto=format&fit=crop&q=60' },
-               { name: 'Celana Chino Slim Fit', sold: 120, revenue: '30.0jt', img: 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=100&auto=format&fit=crop&q=60' },
-             ].map((item, i) => (
+             { [
+  {
+    name: "Nasi Goreng Spesial",
+    sold: 320,
+    revenue: "11.2jt",
+    img: "https://ik.imagekit.io/dcjlghyytp1/https://sayurbox-blog-stage.s3.amazonaws.com/uploads/2020/07/fried-2509089_1920.jpg?tr=f-auto",
+  },
+  {
+    name: "Es Kopi Susu Aren",
+    sold: 540,
+    revenue: "11.8jt",
+    img: "https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=100&q=60",
+  },
+  {
+    name: "Ayam Bakar Madu",
+    sold: 210,
+    revenue: "8.8jt",
+    img: "https://o-cdf.oramiland.com/unsafe/cnc-magazine.oramiland.com/parenting/original_images/3_Resep_Ayam_Bakar_Madu_-2.jpg",
+  },
+  {
+    name: "Kentang Goreng",
+    sold: 430,
+    revenue: "7.7jt",
+    img: "https://image.idntimes.com/post/20230712/tips-membuat-kentang-goreng-anti-lembek-dan-tetap-kriuk-resep-kentang-goreng-mcd-kentang-goreng-kfc-9cde86371d7fc78c91ae80a6ffab250e-2c28a950c10d937a546160e888ed397c.jpg",
+  },
+  {
+    name: "Spaghetti Carbonara",
+    sold: 190,
+    revenue: "7.2jt",
+    img: "https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&w=100&q=60",
+  },
+].map((item, i) => (
                <div key={i} className="flex items-center justify-between group">
                  <div className="flex items-center gap-3">
                    <div className="relative">

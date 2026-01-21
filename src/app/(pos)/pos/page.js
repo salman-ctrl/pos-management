@@ -1,30 +1,39 @@
 "use client";
 
-import { useState, useMemo } from 'react';
-import { Search, ShoppingCart, Trash2, Plus, Minus, CreditCard, Banknote, X, LogOut, Package, Wallet, ChevronRight, Utensils, Coffee, Shirt, Monitor, LayoutGrid, ArrowLeft, Calculator, CheckCircle } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Search, ShoppingCart, Trash2, Plus, Minus, CreditCard, Banknote, X, LogOut, Package, ChevronRight, Utensils, Coffee, IceCream, Beef, LayoutGrid, ArrowLeft, CheckCircle, User, UserPlus, Crown, Percent, Search as SearchIcon, ChefHat, QrCode, Printer, AlertCircle, ShieldCheck } from 'lucide-react';
 
-// Data Mock Produk
-const PRODUCTS = [
-  { id: 1, name: 'Premium Beef Burger', price: 65000, category: 'Makanan', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format&fit=crop&q=60' },
-  { id: 2, name: 'Ice Caramel Macchiato', price: 45000, category: 'Minuman', image: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=600&auto=format&fit=crop&q=60' },
-  { id: 3, name: 'Kaos Polos Hitam', price: 85000, category: 'Fashion', image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&auto=format&fit=crop&q=60' },
-  { id: 4, name: 'Sneakers Putih', price: 299000, category: 'Fashion', image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&auto=format&fit=crop&q=60' },
-  { id: 5, name: 'Smart Watch Series 7', price: 4500000, category: 'Elektronik', image: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=600&auto=format&fit=crop&q=60' },
-  { id: 6, name: 'Headphone Wireless', price: 1250000, category: 'Elektronik', image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=60' },
-  { id: 7, name: 'Croissant Butter', price: 35000, category: 'Makanan', image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=600&auto=format&fit=crop&q=60' },
-  { id: 8, name: 'Jaket Denim', price: 450000, category: 'Fashion', image: 'https://images.unsplash.com/photo-1551537482-f2075a1d41f2?w=600&auto=format&fit=crop&q=60' },
-  { id: 9, name: 'Matcha Latte', price: 42000, category: 'Minuman', image: 'https://images.unsplash.com/photo-1515823662972-da6a2e4d3002?w=600&auto=format&fit=crop&q=60' },
-  { id: 10, name: 'Kacamata Retro', price: 150000, category: 'Fashion', image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=600&auto=format&fit=crop&q=60' },
-  { id: 11, name: 'Mechanical Keyboard', price: 850000, category: 'Elektronik', image: 'https://images.unsplash.com/photo-1587829741301-dc798b91add1?w=600&auto=format&fit=crop&q=60' },
-  { id: 12, name: 'Salad Buah Segar', price: 55000, category: 'Makanan', image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&auto=format&fit=crop&q=60' },
+// --- DATA MOCK (RESTORAN) ---
+
+const PRODUCTS =  [
+  { id: 1, name: 'Nasi Goreng Spesial', category: 'Makanan Berat', price: 35000, costPrice: 15000, stock: 45, status: 'active', sku: 'FOOD-001', image: 'https://ik.imagekit.io/dcjlghyytp1/https://sayurbox-blog-stage.s3.amazonaws.com/uploads/2020/07/fried-2509089_1920.jpg?tr=f-auto', size: 'large' },
+  { id: 2, name: 'Es Kopi Susu Gula Aren', category: 'Minuman', price: 22000, costPrice: 8000, stock: 120, status: 'active', sku: 'DRK-001', image: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=600&auto=format&fit=crop&q=60', size: 'tall' },
+  { id: 3, name: 'Ayam Bakar Madu', category: 'Makanan Berat', price: 42000, costPrice: 20000, stock: 0, status: 'inactive', sku: 'FOOD-002', image: 'https://o-cdf.oramiland.com/unsafe/cnc-magazine.oramiland.com/parenting/original_images/3_Resep_Ayam_Bakar_Madu_-2.jpg', size: 'normal' },
+  { id: 4, name: 'Kentang Goreng', category: 'Snack', price: 18000, costPrice: 6000, stock: 25, status: 'active', sku: 'SNK-001', image: 'https://image.idntimes.com/post/20230712/tips-membuat-kentang-goreng-anti-lembek-dan-tetap-kriuk-resep-kentang-goreng-mcd-kentang-goreng-kfc-9cde86371d7fc78c91ae80a6ffab250e-2c28a950c10d937a546160e888ed397c.jpg', size: 'wide' },
+  { id: 5, name: 'Ice Lemon Tea', category: 'Minuman', price: 15000, costPrice: 4000, stock: 50, status: 'active', sku: 'DRK-002', image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=600&auto=format&fit=crop&q=60', size: 'normal' },
+  { id: 6, name: 'Burger Daging Sapi', category: 'Makanan Berat', price: 45000, costPrice: 22000, stock: 15, status: 'active', sku: 'FOOD-003', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format&fit=crop&q=60', size: 'normal' },
+  { id: 7, name: 'Spaghetti Carbonara', category: 'Makanan Berat', price: 38000, costPrice: 16000, stock: 10, status: 'active', sku: 'FOOD-004', image: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=600&auto=format&fit=crop&q=60', size: 'normal' },
+  { id: 8, name: 'Pancake Strawberry', category: 'Dessert', price: 25000, costPrice: 9000, stock: 20, status: 'active', sku: 'DST-001', image: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=600&auto=format&fit=crop&q=60', size: 'tall' },
+  { id: 9, name: 'Jus Alpukat', category: 'Minuman', price: 20000, costPrice: 8000, stock: 8, status: 'active', sku: 'DRK-003', image: 'https://images.unsplash.com/photo-1603569283847-aa295f0d016a?w=600&auto=format&fit=crop&q=60', size: 'normal' },
+  { id: 10, name: 'Dimsum Ayam (4pcs)', category: 'Snack', price: 20000, costPrice: 10000, stock: 40, status: 'active', sku: 'SNK-002', image: 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=600&auto=format&fit=crop&q=60', size: 'wide' },
+  { id: 11, name: 'Steak Sapi Lada Hitam', category: 'Makanan Berat', price: 85000, costPrice: 45000, stock: 5, status: 'active', sku: 'FOOD-005', image: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=600&auto=format&fit=crop&q=60', size: 'large' },
+  { id: 12, name: 'Chocolate Lava Cake', category: 'Dessert', price: 30000, costPrice: 12000, stock: 18, status: 'active', sku: 'DST-002', image: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=600&auto=format&fit=crop&q=60', size: 'normal' },
+  { id: 14, name: 'Onion Rings', category: 'Snack', price: 15000, costPrice: 5000, stock: 22, status: 'active', sku: 'SNK-003', image: 'https://images.unsplash.com/photo-1639024471283-03518883512d?w=600&auto=format&fit=crop&q=60', size: 'normal' },
 ];
+
 
 const CATEGORIES = [
   { name: 'Semua', icon: LayoutGrid },
-  { name: 'Makanan', icon: Utensils },
+  { name: 'Makanan Berat', icon: Utensils },
   { name: 'Minuman', icon: Coffee },
-  { name: 'Fashion', icon: Shirt },
-  { name: 'Elektronik', icon: Monitor },
+  { name: 'Snack', icon: ChefHat },
+  { name: 'Dessert', icon: IceCream },
+];
+
+const MEMBERS = [
+    { id: 'MBR-001', name: 'Sultan Andara', type: 'VIP', discount: 0.10 }, // 10%
+    { id: 'MBR-002', name: 'Clarissa Putri', type: 'Member', discount: 0.05 }, // 5%
+    { id: 'MBR-003', name: 'Dimas Anggara', type: 'Member', discount: 0.05 },
 ];
 
 export default function POSPage() {
@@ -32,11 +41,17 @@ export default function POSPage() {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   
-  // Payment Modal States
+  // Member State
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
+  const [memberSearch, setMemberSearch] = useState('');
+
+  // Payment States
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [paymentStep, setPaymentStep] = useState('SELECT'); // 'SELECT' | 'INPUT_CASH' | 'SUCCESS'
-  const [paymentMethod, setPaymentMethod] = useState(''); // 'CASH' | 'QRIS'
+  const [paymentStep, setPaymentStep] = useState('SELECT'); 
+  const [paymentMethod, setPaymentMethod] = useState(''); 
   const [cashGiven, setCashGiven] = useState(0);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   // --- Logic Produk ---
   const filteredProducts = useMemo(() => {
@@ -46,6 +61,14 @@ export default function POSPage() {
       return matchSearch && matchCategory;
     });
   }, [search, selectedCategory]);
+
+  const filteredMembers = useMemo(() => {
+      if(!memberSearch) return MEMBERS;
+      return MEMBERS.filter(m => 
+        m.name.toLowerCase().includes(memberSearch.toLowerCase()) || 
+        m.id.toLowerCase().includes(memberSearch.toLowerCase())
+      );
+  }, [memberSearch]);
 
   // --- Logic Cart ---
   const addToCart = (product) => {
@@ -71,124 +94,160 @@ export default function POSPage() {
     setCart(cart.filter(item => item.id !== id));
   }
 
-  const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-  const tax = cartTotal * 0.11; // PPN 11%
-  const grandTotal = cartTotal + tax;
-  const change = Math.max(0, cashGiven - grandTotal); // Kembalian
+  // --- Calculations ---
+  const subTotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  const discountAmount = selectedMember ? subTotal * selectedMember.discount : 0;
+  const taxableAmount = subTotal - discountAmount;
+  const tax = taxableAmount * 0.11; // PPN 11% (Resto Tax)
+  const grandTotal = taxableAmount + tax;
+  
+  // Calculate change or deficit
+  const deficit = Math.max(0, grandTotal - cashGiven);
+  const change = Math.max(0, cashGiven - grandTotal);
+  const isCashSufficient = cashGiven >= grandTotal;
 
-  // --- Payment Handlers ---
-  const openPaymentModal = () => {
+  // --- Helpers ---
+  // Fungsi format rupiah tanpa 'Rp' untuk input value
+  const formatNumber = (num) => {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
+
+  const handleCashInput = (e) => {
+    // Hanya ambil angka
+    const value = e.target.value.replace(/\D/g, '');
+    setCashGiven(Number(value));
+  };
+
+  // --- Handlers ---
+  const handlePaymentOpen = () => {
     setPaymentStep('SELECT');
     setPaymentMethod('');
     setCashGiven(0);
     setIsPaymentModalOpen(true);
+  }
+
+  const handleMemberSelect = (member) => {
+      setSelectedMember(member);
+      setIsMemberModalOpen(false);
+      setMemberSearch('');
+  }
+
+  // Simulasi Print Struk di Background
+  const handlePrintReceipt = () => {
+      setIsPrinting(true);
+      // Di sini logika untuk mengirim data ke printer thermal
+      console.log("Mengirim data ke printer..."); 
+      
+      // Simulasi delay printer
+      setTimeout(() => {
+          setIsPrinting(false);
+          console.log("Struk berhasil dicetak.");
+      }, 3000);
   };
 
-  const selectCash = () => {
-    setPaymentMethod('CASH');
-    setPaymentStep('INPUT_CASH');
+  const handleCompletePayment = (method) => {
+      setPaymentStep('SUCCESS');
+      handlePrintReceipt(); // Auto print saat sukses
   };
 
-  const selectQRIS = () => {
-    setPaymentMethod('QRIS');
-    setPaymentStep('PROCESS_QRIS'); // Nanti logic Snap API disini
-    // Simulasi langsung sukses utk QRIS sementara
-    setTimeout(() => {
-        setPaymentStep('SUCCESS');
-    }, 2000);
-  };
-
-  const processCashPayment = () => {
-    if (cashGiven >= grandTotal) {
-        setPaymentStep('SUCCESS');
-    }
+  const handleQRISPayment = () => {
+      setPaymentMethod('QRIS');
+      setPaymentStep('PROCESS_QRIS');
+      
+      // Simulasi customer scan QRIS & sukses bayar via Midtrans
+      setTimeout(() => {
+          handleCompletePayment('QRIS');
+      }, 4000);
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
+    <div className="flex h-screen bg-gray-50 overflow-hidden font-sans text-gray-800">
       
       {/* --- LEFT SECTION: PRODUCT GRID --- */}
       <div className="flex-1 flex flex-col min-w-0 relative">
         {/* Header */}
-        <header className="h-20 px-8 flex items-center justify-between flex-shrink-0 bg-white/80 backdrop-blur-md sticky top-0 z-20 border-b border-gray-100">
-          <div className="flex items-center gap-6">
-             <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-200">
-                    <Package size={20} strokeWidth={2.5} />
-                </div>
-                <div>
-                    <h1 className="text-xl font-bold text-gray-800 leading-none">POS System</h1>
-                    <p className="text-xs text-gray-400 font-medium mt-1">Berkah Jaya Store</p>
-                </div>
+        <header className="h-20 px-6 flex items-center justify-between flex-shrink-0 bg-white border-b border-gray-100 shadow-sm z-20">
+          <div className="flex items-center gap-4">
+             <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center text-white shadow-orange-200 shadow-lg">
+                 <Utensils size={20} strokeWidth={2.5} />
+             </div>
+             <div>
+                 <h1 className="text-xl font-bold leading-none tracking-tight">Restaurant POS</h1>
+                 <p className="text-xs text-gray-400 font-medium mt-1">Berkah Jaya Resto</p>
              </div>
              
-             <div className="relative group ml-8">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500 transition-colors" size={20} />
+             {/* Search Bar */}
+             <div className="ml-8 relative group hidden md:block">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500 transition-colors" size={18} />
                 <input 
                   type="text" 
-                  placeholder="Cari produk..." 
+                  placeholder="Cari menu makanan..." 
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-12 pr-6 py-3 bg-gray-100 border-none rounded-2xl text-sm w-80 focus:ring-2 focus:ring-orange-200 focus:bg-white transition-all outline-none placeholder:text-gray-400 font-medium"
+                  className="pl-11 pr-4 py-2.5 bg-gray-100 border-none rounded-xl text-sm w-72 focus:ring-2 focus:ring-orange-100 focus:bg-white transition-all outline-none font-medium placeholder:text-gray-400"
                 />
              </div>
           </div>
 
-          <div className="flex items-center gap-4">
-             <div className="text-right hidden md:block">
-                <p className="text-sm font-bold text-gray-800">Kasir 01</p>
-                <div className="flex items-center gap-1 text-xs text-green-500 font-medium bg-green-50 px-2 py-0.5 rounded-lg w-fit ml-auto">
+          <div className="flex items-center gap-3">
+             <div className="hidden md:flex flex-col items-end mr-2">
+                <span className="text-sm font-bold">Kasir 01</span>
+                <span className="text-[10px] text-green-600 bg-green-50 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> Online
-                </div>
+                </span>
              </div>
-             <a href="/" className="p-3 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Keluar">
-                <LogOut size={22} />
-             </a>
+             <button className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Keluar">
+                <LogOut size={20} />
+             </button>
           </div>
         </header>
 
         {/* Categories */}
-        <div className="px-8 py-6 flex gap-3 overflow-x-auto no-scrollbar">
+        <div className="px-6 py-4 flex gap-3 overflow-x-auto no-scrollbar border-b border-gray-50 bg-white/50 backdrop-blur-sm">
            {CATEGORIES.map((cat, idx) => {
              const Icon = cat.icon;
+             const isActive = selectedCategory === cat.name;
              return (
                 <button
-                    key={idx}
-                    onClick={() => setSelectedCategory(cat.name)}
-                    className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-bold transition-all whitespace-nowrap border-2 ${
-                        selectedCategory === cat.name 
-                        ? 'bg-gray-900 text-white border-gray-900 shadow-xl shadow-gray-200 scale-105' 
-                        : 'bg-white text-gray-500 border-transparent hover:bg-gray-100'
-                    }`}
+                   key={idx}
+                   onClick={() => setSelectedCategory(cat.name)}
+                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap border ${
+                       isActive 
+                       ? 'bg-gray-900 text-white border-gray-900 shadow-md' 
+                       : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                   }`}
                 >
-                    <Icon size={18} />
-                    {cat.name}
+                   <Icon size={16} className={isActive ? 'text-orange-400' : 'text-gray-400'} />
+                   {cat.name}
                 </button>
              )
            })}
         </div>
 
-        {/* Grid */}
-        <div className="flex-1 overflow-y-auto px-8 pb-8">
-           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {/* Product Grid */}
+        <div className="flex-1 overflow-y-auto px-6 py-6 bg-gray-50/50">
+           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-5 pb-20">
               {filteredProducts.map(product => (
                 <div 
                   key={product.id}
                   onClick={() => addToCart(product)}
-                  className="group bg-white rounded-3xl p-3 cursor-pointer hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 border border-gray-100 flex flex-col h-full"
+                  className="group bg-white rounded-2xl p-3 cursor-pointer hover:shadow-xl hover:shadow-gray-200/50 hover:-translate-y-1 transition-all duration-300 border border-gray-100 flex flex-col h-full relative overflow-hidden"
                 >
-                   <div className="relative h-40 w-full rounded-2xl overflow-hidden mb-3">
+                   <div className="relative h-36 w-full rounded-xl overflow-hidden mb-3 bg-gray-100">
                       <img src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                      <button className="absolute bottom-2 right-2 bg-white text-orange-600 p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-                          <Plus size={18} strokeWidth={3} />
-                      </button>
+                      {/* Overlay Add Button */}
+                      <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <div className="bg-white/90 text-gray-900 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm translate-y-4 group-hover:translate-y-0 transition-transform">
+                              + Tambah
+                          </div>
+                      </div>
                    </div>
-                   <div className="px-1 flex-1 flex flex-col">
-                      <h3 className="font-bold text-gray-800 text-base leading-tight mb-1 line-clamp-2">{product.name}</h3>
-                      <p className="text-xs text-gray-400 font-medium mb-3">{product.category}</p>
-                      <div className="mt-auto">
-                          <p className="text-orange-600 font-extrabold text-lg">
-                            {product.price.toLocaleString('id-ID')}
+                   <div className="flex-1 flex flex-col">
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">{product.category}</p>
+                      <h3 className="font-bold text-gray-800 text-sm leading-snug mb-2 line-clamp-2">{product.name}</h3>
+                      <div className="mt-auto flex justify-between items-end">
+                          <p className="text-orange-600 font-bold text-base">
+                            Rp {product.price.toLocaleString('id-ID')}
                           </p>
                       </div>
                    </div>
@@ -199,92 +258,180 @@ export default function POSPage() {
       </div>
 
       {/* --- RIGHT SECTION: CART --- */}
-      <div className="w-[420px] bg-white border-l border-gray-100 flex flex-col shadow-2xl z-30 relative">
-         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 via-red-500 to-purple-600"></div>
-
-         <div className="h-20 px-6 flex items-center justify-between border-b border-gray-50">
-            <div>
-                <h2 className="font-extrabold text-2xl text-gray-800">Order Menu</h2>
-                <p className="text-xs text-gray-400 font-medium mt-0.5">Order #ORD-0092</p>
-            </div>
-            <button onClick={() => setCart([])} className="text-xs text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-lg font-bold transition-colors">
-               Hapus Semua
-            </button>
+      <div className="w-[400px] bg-white border-l border-gray-100 flex flex-col shadow-2xl z-30 relative">
+         
+         {/* Member Selection Area */}
+         <div className="px-6 pt-6 pb-4 border-b border-gray-50">
+            {selectedMember ? (
+                <div className="bg-orange-50 rounded-xl p-3 flex justify-between items-center border border-orange-100">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-orange-500 shadow-sm border border-orange-100">
+                            {selectedMember.type === 'VIP' ? <Crown size={18} fill="currentColor"/> : <User size={18}/>}
+                        </div>
+                        <div>
+                            <p className="text-sm font-bold text-gray-800">{selectedMember.name}</p>
+                            <p className="text-xs text-orange-600 font-medium flex items-center gap-1">
+                                {selectedMember.type} • Diskon {selectedMember.discount * 100}%
+                            </p>
+                        </div>
+                    </div>
+                    <button onClick={() => setSelectedMember(null)} className="p-1.5 bg-white text-gray-400 hover:text-red-500 rounded-lg transition-colors">
+                        <X size={16} />
+                    </button>
+                </div>
+            ) : (
+                <button 
+                    onClick={() => setIsMemberModalOpen(true)}
+                    className="w-full py-3 border border-dashed border-gray-300 rounded-xl flex items-center justify-center gap-2 text-gray-500 hover:border-orange-500 hover:text-orange-500 hover:bg-orange-50 transition-all text-sm font-bold"
+                >
+                    <UserPlus size={18} /> Tambah Member (Opsional)
+                </button>
+            )}
          </div>
 
-         <div className="flex-1 overflow-y-auto p-6 space-y-4">
+         {/* Cart Header */}
+         <div className="px-6 py-2 flex items-center justify-between">
+            <h2 className="font-bold text-gray-800 text-lg">Pesanan Saat Ini</h2>
+            {cart.length > 0 && (
+                <button onClick={() => setCart([])} className="text-[10px] text-red-500 hover:bg-red-50 px-2 py-1 rounded-md font-bold transition-colors">
+                    Hapus
+                </button>
+            )}
+         </div>
+
+         {/* Cart Items */}
+         <div className="flex-1 overflow-y-auto px-6 py-2 space-y-3">
             {cart.length === 0 ? (
-               <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-4">
-                  <div className="p-6 bg-gray-50 rounded-full animate-bounce-slow">
-                     <ShoppingCart size={48} className="text-gray-300" />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-lg font-bold text-gray-600">Keranjang Kosong</p>
-                    <p className="text-sm text-gray-400 mt-1">Pilih produk di sebelah kiri.</p>
-                  </div>
+               <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-4 opacity-50">
+                  <ShoppingCart size={48} strokeWidth={1.5} />
+                  <p className="text-sm font-medium">Belum ada menu dipilih</p>
                </div>
             ) : (
                cart.map(item => (
-                 <div key={item.id} className="flex gap-4 group">
-                    <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100">
+                 <div key={item.id} className="flex gap-3 group relative">
+                    <div className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100 bg-gray-50">
                         <img src={item.image} className="w-full h-full object-cover" alt={item.name} />
                     </div>
-                    <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-                       <div className="flex justify-between items-start">
-                           <p className="font-bold text-gray-800 text-sm leading-tight line-clamp-1">{item.name}</p>
-                           <button onClick={() => removeFromCart(item.id)} className="text-gray-300 hover:text-red-500 transition-colors">
-                               <X size={16} />
-                           </button>
-                       </div>
-                       <div className="flex justify-between items-end">
+                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                       <p className="font-bold text-gray-800 text-sm line-clamp-1">{item.name}</p>
+                       <p className="text-xs text-gray-400 mb-1.5">{item.category}</p>
+                       <div className="flex justify-between items-center">
                            <p className="text-orange-600 font-bold text-sm">Rp {(item.price * item.qty).toLocaleString('id-ID')}</p>
-                           <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-1">
-                              <button onClick={() => updateQty(item.id, -1)} className="w-6 h-6 flex items-center justify-center bg-white rounded shadow-sm text-gray-600 hover:bg-gray-100 hover:text-red-500 transition-colors text-xs">
-                                 <Minus size={12} />
+                           
+                           {/* Qty Control */}
+                           <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-0.5 border border-gray-100">
+                              <button onClick={() => updateQty(item.id, -1)} className="w-5 h-5 flex items-center justify-center hover:bg-white rounded text-gray-500 hover:text-red-500 transition-all hover:shadow-sm">
+                                  <Minus size={10} />
                               </button>
-                              <span className="text-sm font-bold w-4 text-center">{item.qty}</span>
-                              <button onClick={() => updateQty(item.id, 1)} className="w-6 h-6 flex items-center justify-center bg-white rounded shadow-sm text-gray-600 hover:bg-gray-100 hover:text-green-500 transition-colors text-xs">
-                                 <Plus size={12} />
+                              <span className="text-xs font-bold w-3 text-center">{item.qty}</span>
+                              <button onClick={() => updateQty(item.id, 1)} className="w-5 h-5 flex items-center justify-center hover:bg-white rounded text-gray-500 hover:text-green-500 transition-all hover:shadow-sm">
+                                  <Plus size={10} />
                               </button>
                            </div>
                        </div>
                     </div>
+                    {/* Hover Remove */}
+                    <button 
+                        onClick={() => removeFromCart(item.id)}
+                        className="absolute -right-2 top-0 p-1 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                        <X size={14} />
+                    </button>
                  </div>
                ))
             )}
          </div>
 
-         <div className="bg-gray-50 p-6 rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.03)]">
-            <div className="space-y-3 mb-6">
-               <div className="flex justify-between text-sm text-gray-500 font-medium">
+         {/* Bill Summary Section */}
+         <div className="bg-gray-50 p-6 rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.03)] border-t border-gray-100">
+            <div className="space-y-2 mb-6 text-sm">
+               <div className="flex justify-between text-gray-500">
                   <span>Subtotal</span>
-                  <span className="text-gray-800 font-bold">Rp {cartTotal.toLocaleString('id-ID')}</span>
+                  <span className="font-medium text-gray-900">Rp {subTotal.toLocaleString('id-ID')}</span>
                </div>
-               <div className="flex justify-between text-sm text-gray-500 font-medium">
+               
+               {/* Member Discount Row (Conditional) */}
+               {selectedMember && (
+                   <div className="flex justify-between text-orange-600 animate-in fade-in slide-in-from-right-5">
+                      <span className="flex items-center gap-1"><Percent size={12}/> Diskon Member</span>
+                      <span className="font-bold">- Rp {discountAmount.toLocaleString('id-ID')}</span>
+                   </div>
+               )}
+
+               <div className="flex justify-between text-gray-500">
                   <span>Pajak (11%)</span>
-                  <span className="text-gray-800 font-bold">Rp {tax.toLocaleString('id-ID')}</span>
+                  <span className="font-medium text-gray-900">Rp {tax.toLocaleString('id-ID')}</span>
                </div>
-               <div className="border-t border-dashed border-gray-300 my-3"></div>
+               
+               <div className="border-t border-dashed border-gray-300 my-2"></div>
+               
                <div className="flex justify-between items-end">
-                  <span className="text-gray-600 font-bold">Total Tagihan</span>
-                  <span className="text-2xl font-extrabold text-orange-600">Rp {grandTotal.toLocaleString('id-ID')}</span>
+                  <span className="text-gray-900 font-bold text-base">Total Tagihan</span>
+                  <span className="text-2xl font-black text-gray-900">Rp {grandTotal.toLocaleString('id-ID')}</span>
                </div>
             </div>
 
             <button 
                disabled={cart.length === 0}
-               onClick={openPaymentModal}
-               className="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed shadow-lg shadow-gray-300 hover:shadow-xl transition-all flex items-center justify-between px-6 group"
+               onClick={handlePaymentOpen}
+               className="w-full py-4 bg-gray-900 text-white rounded-xl font-bold text-lg hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed shadow-lg shadow-gray-200 transition-all flex items-center justify-center gap-2 group"
             >
-               <span>Bayar Sekarang</span>
-               <span className="bg-white/20 p-2 rounded-lg group-hover:translate-x-1 transition-transform">
-                   <ChevronRight size={20} />
-               </span>
+               <span>Proses Pembayaran</span>
+               <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
             </button>
          </div>
       </div>
 
-      {/* --- ADVANCED PAYMENT MODAL --- */}
+      {/* --- MODAL 1: MEMBER SEARCH --- */}
+      {isMemberModalOpen && (
+         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+             <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden zoom-in-95">
+                <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <h3 className="font-bold text-gray-800">Cari Member</h3>
+                    <button onClick={() => setIsMemberModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
+                </div>
+                <div className="p-4">
+                    <div className="relative mb-4">
+                        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <input 
+                            autoFocus
+                            type="text"
+                            placeholder="Ketik nama atau ID member..."
+                            value={memberSearch}
+                            onChange={(e) => setMemberSearch(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-orange-200"
+                        />
+                    </div>
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {filteredMembers.length > 0 ? (
+                            filteredMembers.map(member => (
+                                <button 
+                                    key={member.id} 
+                                    onClick={() => handleMemberSelect(member)}
+                                    className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-orange-50 border border-transparent hover:border-orange-100 group transition-all text-left"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${member.type === 'VIP' ? 'bg-orange-400' : 'bg-blue-400'}`}>
+                                            {member.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-gray-800 group-hover:text-orange-700">{member.name}</p>
+                                            <p className="text-xs text-gray-500">{member.id} • {member.type}</p>
+                                        </div>
+                                    </div>
+                                    {member.type === 'VIP' && <Crown size={16} className="text-orange-400" fill="currentColor"/>}
+                                </button>
+                            ))
+                        ) : (
+                            <p className="text-center text-gray-400 py-4 text-sm">Member tidak ditemukan.</p>
+                        )}
+                    </div>
+                </div>
+             </div>
+         </div>
+      )}
+
+      {/* --- MODAL 2: PAYMENT --- */}
       {isPaymentModalOpen && (
          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
             <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden zoom-in-95">
@@ -299,13 +446,9 @@ export default function POSPage() {
                     )}
                     <div>
                         <h3 className="text-xl font-extrabold text-gray-900">
-                            {paymentStep === 'SUCCESS' ? 'Pembayaran Berhasil' : 'Pembayaran'}
+                            {paymentStep === 'SUCCESS' ? 'Pembayaran Berhasil' : 
+                             paymentStep === 'PROCESS_QRIS' ? 'Midtrans Payment' : 'Metode Pembayaran'}
                         </h3>
-                        <p className="text-sm text-gray-500 mt-1">
-                            {paymentStep === 'SELECT' && 'Pilih metode pembayaran.'}
-                            {paymentStep === 'INPUT_CASH' && 'Masukkan nominal uang tunai.'}
-                            {paymentStep === 'SUCCESS' && 'Transaksi telah disimpan.'}
-                        </p>
                     </div>
                   </div>
                   <button onClick={() => setIsPaymentModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-gray-600">
@@ -321,25 +464,30 @@ export default function POSPage() {
                         <div className="text-center mb-8">
                             <p className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Total Tagihan</p>
                             <h2 className="text-4xl font-black text-gray-900">Rp {grandTotal.toLocaleString('id-ID')}</h2>
+                            {selectedMember && (
+                                <span className="inline-block mt-2 px-3 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded-full">
+                                    Termasuk Diskon Member {selectedMember.discount * 100}%
+                                </span>
+                            )}
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                            <button onClick={selectCash} className="flex flex-col items-center justify-center gap-3 p-6 border-2 border-gray-100 rounded-2xl hover:border-green-500 hover:bg-green-50 transition-all group bg-white shadow-sm hover:shadow-md">
+                            <button onClick={() => { setPaymentMethod('CASH'); setPaymentStep('INPUT_CASH'); }} className="flex flex-col items-center justify-center gap-3 p-6 border-2 border-gray-100 rounded-2xl hover:border-green-500 hover:bg-green-50 transition-all group bg-white shadow-sm hover:shadow-md">
                                 <div className="p-4 bg-green-100 text-green-600 rounded-2xl group-hover:bg-green-200 transition-colors">
                                     <Banknote size={36} />
                                 </div>
                                 <span className="font-bold text-gray-700 text-lg">Tunai</span>
                             </button>
-                            <button onClick={selectQRIS} className="flex flex-col items-center justify-center gap-3 p-6 border-2 border-gray-100 rounded-2xl hover:border-blue-500 hover:bg-blue-50 transition-all group bg-white shadow-sm hover:shadow-md">
+                            <button onClick={handleQRISPayment} className="flex flex-col items-center justify-center gap-3 p-6 border-2 border-gray-100 rounded-2xl hover:border-blue-500 hover:bg-blue-50 transition-all group bg-white shadow-sm hover:shadow-md">
                                 <div className="p-4 bg-blue-100 text-blue-600 rounded-2xl group-hover:bg-blue-200 transition-colors">
-                                    <CreditCard size={36} />
+                                    <QrCode size={36} />
                                 </div>
-                                <span className="font-bold text-gray-700 text-lg">QRIS / Debit</span>
+                                <span className="font-bold text-gray-700 text-lg">QRIS / E-Wallet</span>
                             </button>
                         </div>
                        </>
                    )}
 
-                   {/* STEP 2: INPUT CASH (KALKULATOR) */}
+                   {/* STEP 2: INPUT CASH */}
                    {paymentStep === 'INPUT_CASH' && (
                        <div className="space-y-6">
                            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-100">
@@ -352,11 +500,11 @@ export default function POSPage() {
                                <div className="relative">
                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">Rp</div>
                                    <input 
-                                        type="number" 
+                                        type="text" 
                                         autoFocus
-                                        value={cashGiven}
-                                        onChange={(e) => setCashGiven(Number(e.target.value))}
-                                        className="w-full pl-12 pr-4 py-4 bg-white border-2 border-gray-200 rounded-2xl text-xl font-bold text-gray-900 focus:border-green-500 focus:ring-0 outline-none transition-all"
+                                        value={cashGiven === 0 ? '' : formatNumber(cashGiven)}
+                                        onChange={handleCashInput}
+                                        className="w-full pl-12 pr-4 py-4 bg-white border-2 border-gray-200 rounded-2xl text-xl font-bold text-gray-900 focus:border-green-500 focus:ring-0 outline-none transition-all placeholder:text-gray-300"
                                         placeholder="0"
                                    />
                                </div>
@@ -369,67 +517,124 @@ export default function POSPage() {
                                 <button onClick={() => setCashGiven(100000)} className="py-2 px-3 bg-gray-100 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-200">100.000</button>
                            </div>
 
-                           {/* Change Display */}
-                           <div className={`p-4 rounded-2xl border flex justify-between items-center ${change >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-                                <span className={`font-medium ${change >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                                    {change >= 0 ? 'Kembalian' : 'Kurang'}
+                           {/* Change/Deficit Display */}
+                           <div className={`p-4 rounded-2xl border flex justify-between items-center ${isCashSufficient ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                                <span className={`font-medium flex items-center gap-2 ${isCashSufficient ? 'text-green-700' : 'text-red-700'}`}>
+                                    {isCashSufficient ? 'Kembalian' : <><AlertCircle size={18}/> Kurang</>}
                                 </span>
-                                <span className={`text-2xl font-black ${change >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                                    Rp {Math.abs(change).toLocaleString('id-ID')}
+                                <span className={`text-2xl font-black ${isCashSufficient ? 'text-green-700' : 'text-red-700'}`}>
+                                    Rp {isCashSufficient ? formatNumber(change) : formatNumber(deficit)}
                                 </span>
                            </div>
 
                            <button 
-                                disabled={cashGiven < grandTotal}
-                                onClick={processCashPayment}
-                                className="w-full py-4 bg-green-600 text-white rounded-2xl font-bold text-lg hover:bg-green-700 shadow-lg shadow-green-200 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                               disabled={!isCashSufficient}
+                               onClick={() => handleCompletePayment('CASH')}
+                               className="w-full py-4 bg-green-600 text-white rounded-2xl font-bold text-lg hover:bg-green-700 shadow-lg shadow-green-200 transition-all disabled:bg-gray-300 disabled:shadow-none disabled:cursor-not-allowed flex items-center justify-center gap-2"
                            >
-                                <CheckCircle size={20} />
-                                Konfirmasi Bayar
+                               <CheckCircle size={20} />
+                               Konfirmasi Bayar
                            </button>
                        </div>
                    )}
 
+                   {/* STEP 2B: PROCESS QRIS (MIDTRANS STYLE) */}
+                   {paymentStep === 'PROCESS_QRIS' && (
+                        <div className="text-center py-6">
+                            {/* Midtrans Header */}
+                            <div className="flex justify-center items-center gap-2 mb-6 opacity-80">
+                                <ShieldCheck className="text-blue-900" size={20} />
+                                <span className="font-bold text-blue-900 tracking-tight">Midtrans</span>
+                                <span className="text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-500 font-medium">Secured</span>
+                            </div>
+
+                            <div className="relative w-56 h-56 mx-auto mb-6 bg-white p-3 rounded-2xl shadow-lg border border-gray-200 flex items-center justify-center">
+                                {/* Dummy QR Code */}
+                                <QrCode size={180} className="text-gray-800" />
+                                
+                                {/* Midtrans Logo Overlay */}
+                                <div className="absolute inset-0 flex items-center justify-center bg-white/90 backdrop-blur-[2px] rounded-2xl animate-pulse">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                        <p className="text-xs font-bold text-blue-900">Menunggu Pembayaran...</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-1 mb-6">
+                                <h3 className="text-lg font-bold text-gray-800">Scan QRIS</h3>
+                                <p className="text-gray-500 text-sm">Gopay, OVO, Dana, ShopeePay, LinkAja</p>
+                            </div>
+
+                            <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
+                                <span>Powered by</span>
+                                <span className="font-bold text-gray-600">Midtrans Payment Gateway</span>
+                            </div>
+                        </div>
+                   )}
+
                    {/* STEP 3: SUCCESS STATE */}
                    {paymentStep === 'SUCCESS' && (
-                       <div className="text-center py-8">
+                       <div className="text-center py-4">
                            <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
                                 <CheckCircle size={48} />
                            </div>
-                           <h3 className="text-2xl font-black text-gray-900 mb-2">Transaksi Berhasil!</h3>
-                           <p className="text-gray-500 mb-8">Struk pembayaran telah dicetak otomatis.</p>
+                           <h3 className="text-2xl font-black text-gray-900 mb-2">Pembayaran Berhasil!</h3>
                            
-                           <div className="bg-gray-50 p-4 rounded-2xl mb-8 text-sm">
+                           {/* Printing Indicator */}
+                           <div className="flex items-center justify-center gap-2 text-gray-500 mb-8 bg-gray-50 py-2 rounded-full w-fit mx-auto px-4">
+                                {isPrinting ? (
+                                    <>
+                                        <Printer size={16} className="animate-pulse" />
+                                        <span className="text-sm font-medium">Sedang mencetak struk otomatis...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle size={16} className="text-green-500" />
+                                        <span className="text-sm font-medium">Struk berhasil dicetak</span>
+                                    </>
+                                )}
+                           </div>
+                           
+                           <div className="bg-gray-50 p-4 rounded-2xl mb-8 text-sm text-left border border-gray-100">
                                 <div className="flex justify-between mb-2">
-                                    <span className="text-gray-500">Total</span>
-                                    <span className="font-bold text-gray-900">Rp {grandTotal.toLocaleString('id-ID')}</span>
+                                    <span className="text-gray-500">Total Transaksi</span>
+                                    <span className="font-bold text-gray-900">Rp {formatNumber(grandTotal)}</span>
                                 </div>
                                 {paymentMethod === 'CASH' && (
                                     <>
                                         <div className="flex justify-between mb-2">
-                                            <span className="text-gray-500">Tunai</span>
-                                            <span className="font-bold text-gray-900">Rp {cashGiven.toLocaleString('id-ID')}</span>
+                                            <span className="text-gray-500">Tunai Diterima</span>
+                                            <span className="font-bold text-gray-900">Rp {formatNumber(cashGiven)}</span>
                                         </div>
                                         <div className="flex justify-between pt-2 border-t border-gray-200">
                                             <span className="text-gray-500 font-bold">Kembalian</span>
-                                            <span className="font-bold text-green-600">Rp {change.toLocaleString('id-ID')}</span>
+                                            <span className="font-bold text-green-600">Rp {formatNumber(change)}</span>
                                         </div>
                                     </>
+                                )}
+                                {paymentMethod === 'QRIS' && (
+                                    <div className="flex justify-between pt-2 border-t border-gray-200">
+                                        <span className="text-gray-500">Metode</span>
+                                        <span className="font-bold text-blue-600 flex items-center gap-1">
+                                            <ShieldCheck size={14}/> QRIS Midtrans
+                                        </span>
+                                    </div>
                                 )}
                            </div>
 
                            <div className="flex gap-3">
-                               <button className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200">Cetak Ulang</button>
-                               <button onClick={() => { setIsPaymentModalOpen(false); setCart([]); }} className="flex-1 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800">Transaksi Baru</button>
+                               <button 
+                                onClick={handlePrintReceipt}
+                                disabled={isPrinting}
+                                className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 disabled:opacity-50"
+                               >
+                                   Cetak Ulang
+                               </button>
+                               <button onClick={() => { setIsPaymentModalOpen(false); setCart([]); setSelectedMember(null); }} className="flex-1 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800">
+                                   Transaksi Baru
+                               </button>
                            </div>
-                       </div>
-                   )}
-
-                   {/* STEP QRIS PLACEHOLDER */}
-                   {paymentStep === 'PROCESS_QRIS' && (
-                       <div className="text-center py-10">
-                           <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-                           <p className="text-gray-600 font-bold">Menghubungkan ke EDC / Midtrans...</p>
                        </div>
                    )}
 

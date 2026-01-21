@@ -3,23 +3,23 @@
 import { useState } from 'react';
 import { Search, Filter, Plus, Package, Edit, Trash2, AlertTriangle, X, UploadCloud, Save, ImageIcon, LayoutGrid, ChevronLeft, ChevronRight, DollarSign } from 'lucide-react';
 
-// Data Awal Dummy (Tema Fashion dengan Bento Layout)
+// Data Awal Dummy (Tema Restoran dengan Bento Layout)
 // Update: Menambahkan cost_price (Harga Modal) sesuai ERD
 const INITIAL_PRODUCTS = [
-  { id: 1, name: 'Kaos Polos Cotton Combed 30s - Hitam', category: 'Atasan', price: 85000, costPrice: 45000, stock: 120, status: 'active', sku: 'TS-BLK-001', image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&auto=format&fit=crop&q=60', size: 'large' },
-  { id: 2, name: 'Kemeja Flanel Kotak Vintage', category: 'Atasan', price: 185000, costPrice: 95000, stock: 4, status: 'active', sku: 'SRT-FLN-002', image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&auto=format&fit=crop&q=60', size: 'tall' },
-  { id: 3, name: 'Celana Jeans Slim Fit Navy', category: 'Bawahan', price: 325000, costPrice: 180000, stock: 24, status: 'active', sku: 'PNT-JNS-003', image: 'https://images.unsplash.com/photo-1542272454315-4c01d7abdf4a?w=600&auto=format&fit=crop&q=60', size: 'normal' },
-  { id: 4, name: 'Jaket Denim Oversized', category: 'Outerwear', price: 450000, costPrice: 250000, stock: 2, status: 'active', sku: 'JKT-DNM-004', image: 'https://images.unsplash.com/photo-1551537482-f2075a1d41f2?w=600&auto=format&fit=crop&q=60', size: 'wide' },
-  { id: 5, name: 'Sneakers Putih Casual', category: 'Sepatu', price: 299000, costPrice: 150000, stock: 0, status: 'inactive', sku: 'SHS-WHT-005', image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&auto=format&fit=crop&q=60', size: 'normal' },
-  { id: 6, name: 'Topi Baseball New York', category: 'Aksesoris', price: 75000, costPrice: 35000, stock: 50, status: 'active', sku: 'ACC-CAP-006', image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&auto=format&fit=crop&q=60', size: 'normal' },
-  { id: 7, name: 'Hoodie Oversized Grey', category: 'Outerwear', price: 250000, costPrice: 130000, stock: 15, status: 'active', sku: 'HDD-GRY-007', image: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&auto=format&fit=crop&q=60', size: 'normal' },
-  { id: 8, name: 'Rok Plisket Mocca', category: 'Bawahan', price: 125000, costPrice: 65000, stock: 30, status: 'active', sku: 'SKT-PLC-008', image: 'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=600&auto=format&fit=crop&q=60', size: 'tall' },
-  { id: 9, name: 'Kacamata Hitam Retro', category: 'Aksesoris', price: 150000, costPrice: 40000, stock: 8, status: 'active', sku: 'GLS-RET-009', image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=600&auto=format&fit=crop&q=60', size: 'normal' },
-  { id: 10, name: 'Tas Selempang Kulit', category: 'Aksesoris', price: 350000, costPrice: 175000, stock: 12, status: 'active', sku: 'BAG-LTH-010', image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&auto=format&fit=crop&q=60', size: 'wide' },
-  { id: 11, name: 'Blazer Formal Hitam', category: 'Outerwear', price: 550000, costPrice: 300000, stock: 5, status: 'active', sku: 'BLZ-BLK-011', image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600&auto=format&fit=crop&q=60', size: 'large' },
-  { id: 12, name: 'Sandal Kulit Pria', category: 'Sepatu', price: 180000, costPrice: 90000, stock: 20, status: 'active', sku: 'SDL-LTH-012', image: 'https://images.unsplash.com/photo-1603487742131-4160d6986ba6?w=600&auto=format&fit=crop&q=60', size: 'normal' },
-  { id: 13, name: 'Kaos Striped Navy', category: 'Atasan', price: 95000, costPrice: 45000, stock: 45, status: 'active', sku: 'TS-STR-013', image: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=600&auto=format&fit=crop&q=60', size: 'normal' },
-  { id: 14, name: 'Celana Chino Cream', category: 'Bawahan', price: 210000, costPrice: 110000, stock: 18, status: 'active', sku: 'PNT-CHN-014', image: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&auto=format&fit=crop&q=60', size: 'normal' },
+  { id: 1, name: 'Nasi Goreng Spesial', category: 'Makanan Berat', price: 35000, costPrice: 15000, stock: 45, status: 'active', sku: 'FOOD-001', image: 'https://ik.imagekit.io/dcjlghyytp1/https://sayurbox-blog-stage.s3.amazonaws.com/uploads/2020/07/fried-2509089_1920.jpg?tr=f-auto', size: 'large' },
+  { id: 2, name: 'Es Kopi Susu Gula Aren', category: 'Minuman', price: 22000, costPrice: 8000, stock: 120, status: 'active', sku: 'DRK-001', image: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=600&auto=format&fit=crop&q=60', size: 'tall' },
+  { id: 3, name: 'Ayam Bakar Madu', category: 'Makanan Berat', price: 42000, costPrice: 20000, stock: 0, status: 'inactive', sku: 'FOOD-002', image: 'https://o-cdf.oramiland.com/unsafe/cnc-magazine.oramiland.com/parenting/original_images/3_Resep_Ayam_Bakar_Madu_-2.jpg', size: 'normal' },
+  { id: 4, name: 'Kentang Goreng', category: 'Snack', price: 18000, costPrice: 6000, stock: 25, status: 'active', sku: 'SNK-001', image: 'https://image.idntimes.com/post/20230712/tips-membuat-kentang-goreng-anti-lembek-dan-tetap-kriuk-resep-kentang-goreng-mcd-kentang-goreng-kfc-9cde86371d7fc78c91ae80a6ffab250e-2c28a950c10d937a546160e888ed397c.jpg', size: 'wide' },
+  { id: 5, name: 'Ice Lemon Tea', category: 'Minuman', price: 15000, costPrice: 4000, stock: 50, status: 'active', sku: 'DRK-002', image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=600&auto=format&fit=crop&q=60', size: 'normal' },
+  { id: 6, name: 'Burger Daging Sapi', category: 'Makanan Berat', price: 45000, costPrice: 22000, stock: 15, status: 'active', sku: 'FOOD-003', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format&fit=crop&q=60', size: 'normal' },
+  { id: 7, name: 'Spaghetti Carbonara', category: 'Makanan Berat', price: 38000, costPrice: 16000, stock: 10, status: 'active', sku: 'FOOD-004', image: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=600&auto=format&fit=crop&q=60', size: 'normal' },
+  { id: 8, name: 'Pancake Strawberry', category: 'Dessert', price: 25000, costPrice: 9000, stock: 20, status: 'active', sku: 'DST-001', image: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=600&auto=format&fit=crop&q=60', size: 'tall' },
+  { id: 9, name: 'Jus Alpukat', category: 'Minuman', price: 20000, costPrice: 8000, stock: 8, status: 'active', sku: 'DRK-003', image: 'https://images.unsplash.com/photo-1603569283847-aa295f0d016a?w=600&auto=format&fit=crop&q=60', size: 'normal' },
+  { id: 10, name: 'Dimsum Ayam (4pcs)', category: 'Snack', price: 20000, costPrice: 10000, stock: 40, status: 'active', sku: 'SNK-002', image: 'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=600&auto=format&fit=crop&q=60', size: 'wide' },
+  { id: 11, name: 'Steak Sapi Lada Hitam', category: 'Makanan Berat', price: 85000, costPrice: 45000, stock: 5, status: 'active', sku: 'FOOD-005', image: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=600&auto=format&fit=crop&q=60', size: 'large' },
+  { id: 12, name: 'Chocolate Lava Cake', category: 'Dessert', price: 30000, costPrice: 12000, stock: 18, status: 'active', sku: 'DST-002', image: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=600&auto=format&fit=crop&q=60', size: 'normal' },
+  { id: 13, name: 'Matcha Latte', category: 'Minuman', price: 24000, costPrice: 9000, stock: 35, status: 'active', sku: 'DRK-004', image: 'https://images.unsplash.com/photo-1515825838458-f2a94b20105a?w=600&auto=format&fit=crop&q=60', size: 'normal' },
+  { id: 14, name: 'Onion Rings', category: 'Snack', price: 15000, costPrice: 5000, stock: 22, status: 'active', sku: 'SNK-003', image: 'https://images.unsplash.com/photo-1639024471283-03518883512d?w=600&auto=format&fit=crop&q=60', size: 'normal' },
 ];
 
 export default function ProductsPage() {
@@ -38,9 +38,9 @@ export default function ProductsPage() {
     id: null,
     name: '',
     sku: '',
-    category: 'Atasan',
+    category: 'Makanan Berat', // Default category updated
     price: '',
-    costPrice: '', // Added: Harga Modal
+    costPrice: '', 
     stock: '',
     status: 'active',
     image: '',
@@ -75,7 +75,7 @@ export default function ProductsPage() {
       id: null, 
       name: '', 
       sku: '', 
-      category: 'Atasan', 
+      category: 'Makanan Berat', 
       price: '', 
       costPrice: '',
       stock: '', 
@@ -103,7 +103,7 @@ export default function ProductsPage() {
   const handleSave = (e) => {
     e.preventDefault();
     
-    const finalImage = formData.image || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&auto=format&fit=crop&q=60';
+    const finalImage = formData.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=60'; // Default food placeholder
     
     if (isEditing) {
       setProducts(products.map(p => (p.id === formData.id ? { 
@@ -154,7 +154,7 @@ export default function ProductsPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             <input 
                 type="text" 
-                placeholder="Cari produk fashion..." 
+                placeholder="Cari menu..." 
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                 className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 transition-all"
@@ -168,11 +168,10 @@ export default function ProductsPage() {
                     className="h-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-600 focus:outline-none focus:border-orange-500 cursor-pointer appearance-none pr-8"
                 >
                     <option value="Semua">Semua Kategori</option>
-                    <option value="Atasan">Atasan</option>
-                    <option value="Bawahan">Bawahan</option>
-                    <option value="Outerwear">Outerwear</option>
-                    <option value="Sepatu">Sepatu</option>
-                    <option value="Aksesoris">Aksesoris</option>
+                    <option value="Makanan Berat">Makanan Berat</option>
+                    <option value="Minuman">Minuman</option>
+                    <option value="Snack">Snack</option>
+                    <option value="Dessert">Dessert</option>
                 </select>
                 <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
             </div>
@@ -182,7 +181,7 @@ export default function ProductsPage() {
             onClick={handleAdd}
             className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl hover:bg-orange-600 shadow-sm transition-colors whitespace-nowrap"
         >
-            <Plus size={18} /> Tambah Produk
+            <Plus size={18} /> Tambah Menu
         </button>
       </div>
 
@@ -198,7 +197,7 @@ export default function ProductsPage() {
                 <div className="p-3 bg-white rounded-full shadow-sm mb-3 group-hover:scale-110 transition-transform">
                     <Plus size={24} />
                 </div>
-                <span className="font-medium text-sm">Tambah Produk Baru</span>
+                <span className="font-medium text-sm">Tambah Menu Baru</span>
             </div>
         )}
 
@@ -300,7 +299,7 @@ export default function ProductsPage() {
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
               <h3 className="font-bold text-lg text-gray-800">
-                {isEditing ? 'Edit Produk' : 'Tambah Produk Baru'}
+                {isEditing ? 'Edit Menu' : 'Tambah Menu Baru'}
               </h3>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                 <X size={20} />
@@ -312,7 +311,7 @@ export default function ProductsPage() {
               <div className="flex flex-col md:flex-row gap-6">
                 {/* Left Side: Image Upload & Bento Options */}
                 <div className="w-full md:w-1/3 space-y-3">
-                  <label className="block text-sm font-medium text-gray-700">Foto Produk</label>
+                  <label className="block text-sm font-medium text-gray-700">Foto Menu</label>
                   
                   {/* Image Preview Box */}
                   <div className="border-2 border-dashed border-gray-300 rounded-xl h-40 flex flex-col items-center justify-center text-gray-400 hover:border-orange-400 hover:text-orange-500 transition-colors bg-gray-50 overflow-hidden relative">
@@ -362,14 +361,14 @@ export default function ProductsPage() {
                 {/* Right Side: Inputs */}
                 <div className="flex-1 space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nama Produk <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nama Menu <span className="text-red-500">*</span></label>
                     <input 
                       required
                       type="text" 
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500"
-                      placeholder="Contoh: Kaos Polos Hitam"
+                      placeholder="Contoh: Nasi Goreng Spesial"
                     />
                   </div>
 
@@ -381,7 +380,7 @@ export default function ProductsPage() {
                         value={formData.sku}
                         onChange={(e) => setFormData({...formData, sku: e.target.value})}
                         className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 font-mono text-sm"
-                        placeholder="TS-001"
+                        placeholder="FOOD-001"
                       />
                     </div>
                     <div>
@@ -391,11 +390,10 @@ export default function ProductsPage() {
                         onChange={(e) => setFormData({...formData, category: e.target.value})}
                         className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500"
                       >
-                        <option value="Atasan">Atasan</option>
-                        <option value="Bawahan">Bawahan</option>
-                        <option value="Outerwear">Outerwear</option>
-                        <option value="Sepatu">Sepatu</option>
-                        <option value="Aksesoris">Aksesoris</option>
+                        <option value="Makanan Berat">Makanan Berat</option>
+                        <option value="Minuman">Minuman</option>
+                        <option value="Snack">Snack</option>
+                        <option value="Dessert">Dessert</option>
                       </select>
                     </div>
                   </div>
@@ -442,7 +440,7 @@ export default function ProductsPage() {
                       />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Status Produk</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Status Menu</label>
                         <div className="flex gap-4 pt-1">
                         <label className="flex items-center gap-2 cursor-pointer">
                             <input 
@@ -484,7 +482,7 @@ export default function ProductsPage() {
                   className="px-5 py-2 bg-orange-500 text-white rounded-xl hover:bg-orange-600 shadow-lg shadow-orange-200 font-medium flex items-center gap-2 transition-colors"
                 >
                   <Save size={18} />
-                  Simpan Produk
+                  Simpan Menu
                 </button>
               </div>
             </form>
