@@ -68,7 +68,6 @@ export default function Dashboard() {
           <div className="card-base p-5">
             <div className="flex items-center gap-2 mb-4 text-red-500 font-medium">
               <AlertTriangle size={18} />
-              <h3>Stok Dapur Menipis</h3>
             </div>
             <div className="space-y-3">
               {[
