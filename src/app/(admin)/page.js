@@ -54,7 +54,6 @@ export default function Dashboard() {
             <h3 className="font-semibold text-lg text-gray-800">Analitik Pendapatan</h3>
             <select className="bg-gray-50 border border-gray-200 text-sm rounded-lg px-3 py-2 outline-none focus:border-orange-500">
               <option>7 Hari Terakhir</option>
-              <option>Bulan Ini</option>
             </select>
           </div>
           <div className="h-72 w-full">
