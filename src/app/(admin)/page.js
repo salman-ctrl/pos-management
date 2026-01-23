@@ -48,8 +48,9 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 2. Main Chart Area */}
-        <div className="card-base p-6 lg:col-span-2 min-h-[400px]">
+        {/* 2. Main Chart Area - FIXED HEIGHT */}
+        {/* Ubah 'card-base p-6' menjadi flex column agar chart bisa fill height */}
+        <div className="card-base p-6 lg:col-span-2 min-h-[400px] flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-semibold text-lg text-gray-800">Analitik Pendapatan</h3>
             <select className="bg-gray-50 border border-gray-200 text-sm rounded-lg px-3 py-2 outline-none focus:border-orange-500">
@@ -57,7 +58,8 @@ export default function Dashboard() {
               <option>Bulan Ini</option>
             </select>
           </div>
-          <div className="h-72 w-full">
+          {/* Ganti 'h-72' dengan 'flex-1' agar mengisi sisa ruang card */}
+          <div className="flex-1 w-full min-h-[300px]"> 
             <SalesChart />
           </div>
         </div>

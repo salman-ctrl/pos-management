@@ -243,8 +243,8 @@ export default function CustomersPage() {
                 // TYPE 2: STANDARD/TALL/WIDE CARDS
                 <div className="h-full flex flex-col p-5">
                     <div className="flex justify-between items-start mb-3">
-                        <div className="flex items-center gap-3">
-                            <img src={customer.image} alt={customer.name} className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" />
+                        <div className="flex items-center gap-3 min-w-0">
+                            <img src={customer.image} alt={customer.name} className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm flex-shrink-0" />
                             <div>
                                 <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md border ${getStatusBadge(customer.status)}`}>
                                     {customer.status}
@@ -253,21 +253,21 @@ export default function CustomersPage() {
                         </div>
                     </div>
 
-                    <div className="flex-1 flex flex-col justify-center">
-                        <h3 className="font-bold text-gray-800 text-lg leading-tight line-clamp-1">{customer.name}</h3>
-                        <p className="text-gray-400 text-xs mb-3">{customer.phone}</p>
+                    <div className="flex-1 flex flex-col justify-center min-w-0">
+                        <h3 className="font-bold text-gray-800 text-lg leading-tight truncate" title={customer.name}>{customer.name}</h3>
+                        <p className="text-gray-400 text-xs mb-3 truncate">{customer.phone}</p>
                         
                         {/* Stats Row */}
                         <div className="flex items-center gap-3 mt-auto pt-3 border-t border-gray-50">
-                            <div className="flex-1">
-                                <p className="text-[10px] text-gray-400 uppercase">Visits</p>
-                                <p className="font-bold text-gray-700 flex items-center gap-1">
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[10px] text-gray-400 uppercase truncate">Visits</p>
+                                <p className="font-bold text-gray-700 flex items-center gap-1 whitespace-nowrap">
                                     <ShoppingBag size={12} className="text-orange-500" /> {customer.stats.visits}x
                                 </p>
                             </div>
-                            <div className="flex-1 border-l border-gray-100 pl-3">
-                                <p className="text-[10px] text-gray-400 uppercase">Spent</p>
-                                <p className="font-bold text-gray-700 text-xs">
+                            <div className="flex-1 border-l border-gray-100 pl-3 min-w-0">
+                                <p className="text-[10px] text-gray-400 uppercase truncate">Spent</p>
+                                <p className="font-bold text-gray-700 text-xs whitespace-nowrap">
                                     {formatCurrency(customer.stats.totalSpent).split(',')[0]}
                                 </p>
                             </div>
@@ -287,12 +287,12 @@ export default function CustomersPage() {
         ))}
       </div>
 
-      {/* --- Modal Form CRUD --- */}
+      {/* --- Modal Form CRUD (RESPONSIVE FIX) --- */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 flex-shrink-0">
               <h3 className="font-bold text-lg text-gray-800">
                 {isEditing ? 'Edit Data Pelanggan' : 'Registrasi Member Baru'}
               </h3>
@@ -301,123 +301,125 @@ export default function CustomersPage() {
               </button>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleSave} className="p-6 space-y-6">
-              <div className="flex flex-col md:flex-row gap-6">
-                {/* Left: Image */}
-                <div className="w-full md:w-1/3 space-y-3">
-                    <label className="block text-sm font-medium text-gray-700">Foto Profil</label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-xl h-40 flex flex-col items-center justify-center text-gray-400 bg-gray-50 overflow-hidden relative">
-                         {formData.image ? (
-                            <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
-                        ) : (
-                            <div className="flex flex-col items-center">
-                                <UploadCloud size={24} className="mb-2" />
-                                <span className="text-[10px] text-center px-4">Preview</span>
-                            </div>
-                        )}
-                    </div>
-                    <div>
-                        <label className="text-xs text-gray-500 mb-1 block">URL Foto</label>
-                         <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50">
-                            <ImageIcon size={14} className="text-gray-400"/>
-                            <input 
-                                type="text" 
-                                className="w-full text-xs bg-transparent outline-none text-gray-600"
-                                placeholder="https://..."
-                                value={formData.image}
-                                onChange={(e) => setFormData({...formData, image: e.target.value})}
-                            />
-                        </div>
-                    </div>
-                    
-                    {/* Card Size Selector (Bento Feature) */}
-                    <div>
-                        <label className="text-xs text-gray-500 mb-2 block">Highlight Card (Bento)</label>
-                        <select 
-                            value={formData.size} 
-                            onChange={(e) => setFormData({...formData, size: e.target.value})}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:border-orange-500 outline-none"
-                        >
-                            <option value="normal">Normal (1x1)</option>
-                            <option value="tall">Tinggi (1x2)</option>
-                            <option value="wide">Lebar (2x1)</option>
-                            <option value="large">VIP Besar (2x2)</option>
-                        </select>
-                    </div>
-                </div>
-
-                {/* Right: Inputs */}
-                <div className="flex-1 space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
-                        <input 
-                            required
-                            type="text" 
-                            value={formData.name}
-                            onChange={(e) => setFormData({...formData, name: e.target.value})}
-                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500"
-                            placeholder="Nama Pelanggan"
-                        />
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Status Member</label>
-                            <select 
-                                value={formData.status} 
-                                onChange={(e) => setFormData({...formData, status: e.target.value})}
-                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500"
-                            >
-                                <option value="New">New</option>
-                                <option value="Member">Regular Member</option>
-                                <option value="VIP">VIP</option>
-                            </select>
+            {/* Form - Scrollable Area */}
+            <form onSubmit={handleSave} className="flex flex-col flex-1 min-h-0">
+              <div className="p-6 space-y-6 overflow-y-auto">
+                <div className="flex flex-col md:flex-row gap-6">
+                    {/* Left: Image */}
+                    <div className="w-full md:w-1/3 space-y-3">
+                        <label className="block text-sm font-medium text-gray-700">Foto Profil</label>
+                        <div className="border-2 border-dashed border-gray-300 rounded-xl h-40 flex flex-col items-center justify-center text-gray-400 bg-gray-50 overflow-hidden relative">
+                            {formData.image ? (
+                                <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="flex flex-col items-center">
+                                    <UploadCloud size={24} className="mb-2" />
+                                    <span className="text-[10px] text-center px-4">Preview</span>
+                                </div>
+                            )}
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">No. Telepon</label>
-                            <input 
-                                type="text" 
-                                value={formData.phone}
-                                onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500"
-                                placeholder="+62..."
-                            />
+                            <label className="text-xs text-gray-500 mb-1 block">URL Foto</label>
+                            <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50">
+                                <ImageIcon size={14} className="text-gray-400"/>
+                                <input 
+                                    type="text" 
+                                    className="w-full text-xs bg-transparent outline-none text-gray-600"
+                                    placeholder="https://..."
+                                    value={formData.image}
+                                    onChange={(e) => setFormData({...formData, image: e.target.value})}
+                                />
+                            </div>
+                        </div>
+                        
+                        {/* Card Size Selector (Bento Feature) */}
+                        <div>
+                            <label className="text-xs text-gray-500 mb-2 block">Highlight Card (Bento)</label>
+                            <select 
+                                value={formData.size} 
+                                onChange={(e) => setFormData({...formData, size: e.target.value})}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:border-orange-500 outline-none"
+                            >
+                                <option value="normal">Normal (1x1)</option>
+                                <option value="tall">Tinggi (1x2)</option>
+                                <option value="wide">Lebar (2x1)</option>
+                                <option value="large">VIP Besar (2x2)</option>
+                            </select>
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <input 
-                            type="email" 
-                            value={formData.email}
-                            onChange={(e) => setFormData({...formData, email: e.target.value})}
-                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500"
-                            placeholder="email@pelanggan.com"
-                        />
-                    </div>
-
-                    {/* Stats Manual Input (Optional for Admin) */}
-                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                        <p className="text-xs font-bold text-gray-500 mb-2 uppercase">Data Belanja (Manual Override)</p>
-                        <div className="grid grid-cols-2 gap-3">
+                    {/* Right: Inputs */}
+                    <div className="flex-1 space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                            <input 
+                                required
+                                type="text" 
+                                value={formData.name}
+                                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500"
+                                placeholder="Nama Pelanggan"
+                            />
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-xs text-gray-400 mb-1 block">Total Spent (Rp)</label>
-                                <input 
-                                    type="number" 
-                                    value={formData.stats.totalSpent}
-                                    onChange={(e) => setFormData({...formData, stats: {...formData.stats, totalSpent: Number(e.target.value)}})}
-                                    className="w-full px-2 py-1 text-sm border border-gray-200 rounded bg-white"
-                                />
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Status Member</label>
+                                <select 
+                                    value={formData.status} 
+                                    onChange={(e) => setFormData({...formData, status: e.target.value})}
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500"
+                                >
+                                    <option value="New">New</option>
+                                    <option value="Member">Regular Member</option>
+                                    <option value="VIP">VIP</option>
+                                </select>
                             </div>
                             <div>
-                                <label className="text-xs text-gray-400 mb-1 block">Jml Kunjungan</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">No. Telepon</label>
                                 <input 
-                                    type="number" 
-                                    value={formData.stats.visits}
-                                    onChange={(e) => setFormData({...formData, stats: {...formData.stats, visits: Number(e.target.value)}})}
-                                    className="w-full px-2 py-1 text-sm border border-gray-200 rounded bg-white"
+                                    type="text" 
+                                    value={formData.phone}
+                                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500"
+                                    placeholder="+62..."
                                 />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input 
+                                type="email" 
+                                value={formData.email}
+                                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500"
+                                placeholder="email@pelanggan.com"
+                            />
+                        </div>
+
+                        {/* Stats Manual Input (Optional for Admin) */}
+                        <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                            <p className="text-xs font-bold text-gray-500 mb-2 uppercase">Data Belanja (Manual Override)</p>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs text-gray-400 mb-1 block">Total Spent (Rp)</label>
+                                    <input 
+                                        type="number" 
+                                        value={formData.stats.totalSpent}
+                                        onChange={(e) => setFormData({...formData, stats: {...formData.stats, totalSpent: Number(e.target.value)}})}
+                                        className="w-full px-2 py-1 text-sm border border-gray-200 rounded bg-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-400 mb-1 block">Jml Kunjungan</label>
+                                    <input 
+                                        type="number" 
+                                        value={formData.stats.visits}
+                                        onChange={(e) => setFormData({...formData, stats: {...formData.stats, visits: Number(e.target.value)}})}
+                                        className="w-full px-2 py-1 text-sm border border-gray-200 rounded bg-white"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -425,7 +427,7 @@ export default function CustomersPage() {
               </div>
 
               {/* Footer */}
-              <div className="pt-6 border-t border-gray-100 flex justify-end gap-3">
+              <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 flex-shrink-0 bg-white">
                 <button 
                   type="button"
                   onClick={() => setIsModalOpen(false)}
