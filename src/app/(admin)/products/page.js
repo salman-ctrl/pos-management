@@ -294,10 +294,10 @@ export default function ProductsPage() {
 
       {/* --- Modal CRUD Form --- */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto max-h-[90vh] flex flex-col">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 flex-shrink-0">
               <h3 className="font-bold text-lg text-gray-800">
                 {isEditing ? 'Edit Menu' : 'Tambah Menu Baru'}
               </h3>
@@ -307,169 +307,171 @@ export default function ProductsPage() {
             </div>
 
             {/* Modal Body (Form) */}
-            <form onSubmit={handleSave} className="p-6 space-y-6">
-              <div className="flex flex-col md:flex-row gap-6">
-                {/* Left Side: Image Upload & Bento Options */}
-                <div className="w-full md:w-1/3 space-y-3">
-                  <label className="block text-sm font-medium text-gray-700">Foto Menu</label>
-                  
-                  {/* Image Preview Box */}
-                  <div className="border-2 border-dashed border-gray-300 rounded-xl h-40 flex flex-col items-center justify-center text-gray-400 hover:border-orange-400 hover:text-orange-500 transition-colors bg-gray-50 overflow-hidden relative">
-                    {formData.image ? (
-                        <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
-                    ) : (
-                        <div className="flex flex-col items-center">
-                            <UploadCloud size={24} className="mb-2" />
-                            <span className="text-[10px] text-center px-4">Preview</span>
-                        </div>
-                    )}
-                  </div>
-
-                  {/* Input URL Gambar */}
-                  <div>
-                    <label className="text-xs text-gray-500 mb-1 block">URL Gambar</label>
-                    <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50">
-                        <ImageIcon size={14} className="text-gray-400"/>
-                        <input 
-                            type="text" 
-                            className="w-full text-xs bg-transparent outline-none text-gray-600 truncate"
-                            placeholder="https://..."
-                            value={formData.image}
-                            onChange={(e) => setFormData({...formData, image: e.target.value})}
-                        />
+            <form onSubmit={handleSave} className="flex flex-col flex-1 overflow-hidden">
+              <div className="p-6 space-y-6 overflow-y-auto">
+                <div className="flex flex-col md:flex-row gap-6">
+                  {/* Left Side: Image Upload & Bento Options */}
+                  <div className="w-full md:w-1/3 space-y-3">
+                    <label className="block text-sm font-medium text-gray-700">Foto Menu</label>
+                    
+                    {/* Image Preview Box */}
+                    <div className="border-2 border-dashed border-gray-300 rounded-xl h-40 flex flex-col items-center justify-center text-gray-400 hover:border-orange-400 hover:text-orange-500 transition-colors bg-gray-50 overflow-hidden relative">
+                      {formData.image ? (
+                          <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                      ) : (
+                          <div className="flex flex-col items-center">
+                              <UploadCloud size={24} className="mb-2" />
+                              <span className="text-[10px] text-center px-4">Preview</span>
+                          </div>
+                      )}
                     </div>
-                  </div>
 
-                  {/* Card Size Selector (Bento Feature) */}
-                  <div>
-                    <label className="text-xs text-gray-500 mb-2 block flex items-center gap-1">
-                        <LayoutGrid size={12} /> Tampilan Kartu
-                    </label>
-                    <select 
-                        value={formData.size} 
-                        onChange={(e) => setFormData({...formData, size: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:border-orange-500 outline-none"
-                    >
-                        <option value="normal">Normal (1x1)</option>
-                        <option value="tall">Tinggi (1x2)</option>
-                        <option value="wide">Lebar (2x1)</option>
-                        <option value="large">Unggulan (2x2)</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Right Side: Inputs */}
-                <div className="flex-1 space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nama Menu <span className="text-red-500">*</span></label>
-                    <input 
-                      required
-                      type="text" 
-                      value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500"
-                      placeholder="Contoh: Nasi Goreng Spesial"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
+                    {/* Input URL Gambar */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">SKU (Kode)</label>
-                      <input 
-                        type="text" 
-                        value={formData.sku}
-                        onChange={(e) => setFormData({...formData, sku: e.target.value})}
-                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 font-mono text-sm"
-                        placeholder="FOOD-001"
-                      />
+                      <label className="text-xs text-gray-500 mb-1 block">URL Gambar</label>
+                      <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50">
+                          <ImageIcon size={14} className="text-gray-400"/>
+                          <input 
+                              type="text" 
+                              className="w-full text-xs bg-transparent outline-none text-gray-600 truncate"
+                              placeholder="https://..."
+                              value={formData.image}
+                              onChange={(e) => setFormData({...formData, image: e.target.value})}
+                          />
+                      </div>
                     </div>
+
+                    {/* Card Size Selector (Bento Feature) */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+                      <label className="text-xs text-gray-500 mb-2 block flex items-center gap-1">
+                          <LayoutGrid size={12} /> Tampilan Kartu
+                      </label>
                       <select 
-                        value={formData.category}
-                        onChange={(e) => setFormData({...formData, category: e.target.value})}
-                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500"
+                          value={formData.size} 
+                          onChange={(e) => setFormData({...formData, size: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:border-orange-500 outline-none"
                       >
-                        <option value="Makanan Berat">Makanan Berat</option>
-                        <option value="Minuman">Minuman</option>
-                        <option value="Snack">Snack</option>
-                        <option value="Dessert">Dessert</option>
+                          <option value="normal">Normal (1x1)</option>
+                          <option value="tall">Tinggi (1x2)</option>
+                          <option value="wide">Lebar (2x1)</option>
+                          <option value="large">Unggulan (2x2)</option>
                       </select>
                     </div>
                   </div>
 
-                  {/* PRICE ROW */}
-                  <div className="grid grid-cols-2 gap-4">
+                  {/* Right Side: Inputs */}
+                  <div className="flex-1 space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Harga Jual (Rp) <span className="text-red-500">*</span></label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nama Menu <span className="text-red-500">*</span></label>
                       <input 
                         required
-                        type="number" 
-                        value={formData.price}
-                        onChange={(e) => setFormData({...formData, price: e.target.value})}
+                        type="text" 
+                        value={formData.name}
+                        onChange={(e) => setFormData({...formData, name: e.target.value})}
                         className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500"
-                        placeholder="0"
+                        placeholder="Contoh: Nasi Goreng Spesial"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Harga Modal (HPP)</label>
-                      <div className="relative">
-                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">SKU (Kode)</label>
                         <input 
+                          type="text" 
+                          value={formData.sku}
+                          onChange={(e) => setFormData({...formData, sku: e.target.value})}
+                          className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 font-mono text-sm"
+                          placeholder="FOOD-001"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+                        <select 
+                          value={formData.category}
+                          onChange={(e) => setFormData({...formData, category: e.target.value})}
+                          className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500"
+                        >
+                          <option value="Makanan Berat">Makanan Berat</option>
+                          <option value="Minuman">Minuman</option>
+                          <option value="Snack">Snack</option>
+                          <option value="Dessert">Dessert</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* PRICE ROW */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Harga Jual (Rp) <span className="text-red-500">*</span></label>
+                        <input 
+                          required
                           type="number" 
-                          value={formData.costPrice}
-                          onChange={(e) => setFormData({...formData, costPrice: e.target.value})}
-                          className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 bg-gray-50/50"
+                          value={formData.price}
+                          onChange={(e) => setFormData({...formData, price: e.target.value})}
+                          className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500"
                           placeholder="0"
                         />
                       </div>
-                    </div>
-                  </div>
-
-                  {/* STOCK & STATUS */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Stok Awal</label>
-                      <input 
-                        required
-                        type="number" 
-                        value={formData.stock}
-                        onChange={(e) => setFormData({...formData, stock: e.target.value})}
-                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500"
-                        placeholder="0"
-                      />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Status Menu</label>
-                        <div className="flex gap-4 pt-1">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input 
-                            type="radio" 
-                            name="status"
-                            checked={formData.status === 'active'}
-                            onChange={() => setFormData({...formData, status: 'active'})}
-                            className="accent-orange-500" 
-                            />
-                            <span className="text-sm text-gray-700">Aktif</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input 
-                            type="radio" 
-                            name="status" 
-                            checked={formData.status === 'inactive'}
-                            onChange={() => setFormData({...formData, status: 'inactive'})}
-                            className="accent-gray-500" 
-                            />
-                            <span className="text-sm text-gray-500">Non-Aktif</span>
-                        </label>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Harga Modal (HPP)</label>
+                        <div className="relative">
+                          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                          <input 
+                            type="number" 
+                            value={formData.costPrice}
+                            onChange={(e) => setFormData({...formData, costPrice: e.target.value})}
+                            className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 bg-gray-50/50"
+                            placeholder="0"
+                          />
                         </div>
+                      </div>
+                    </div>
+
+                    {/* STOCK & STATUS */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Stok Awal</label>
+                        <input 
+                          required
+                          type="number" 
+                          value={formData.stock}
+                          onChange={(e) => setFormData({...formData, stock: e.target.value})}
+                          className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Status Menu</label>
+                          <div className="flex gap-4 pt-1">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                              <input 
+                              type="radio" 
+                              name="status"
+                              checked={formData.status === 'active'}
+                              onChange={() => setFormData({...formData, status: 'active'})}
+                              className="accent-orange-500" 
+                              />
+                              <span className="text-sm text-gray-700">Aktif</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                              <input 
+                              type="radio" 
+                              name="status" 
+                              checked={formData.status === 'inactive'}
+                              onChange={() => setFormData({...formData, status: 'inactive'})}
+                              className="accent-gray-500" 
+                              />
+                              <span className="text-sm text-gray-500">Non-Aktif</span>
+                          </label>
+                          </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Modal Footer */}
-              <div className="pt-6 border-t border-gray-100 flex justify-end gap-3">
+              <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 flex-shrink-0 bg-white">
                 <button 
                   type="button"
                   onClick={() => setIsModalOpen(false)}

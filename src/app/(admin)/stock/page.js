@@ -72,7 +72,7 @@ export default function StockPage() {
       </div>
 
       {/* Tabel Log */}
-      <div className="card-base overflow-hidden">
+      <div className="card-base overflow-x-auto">
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-50 text-gray-500 uppercase text-xs border-b border-gray-100">
             <tr>
