@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Search, Plus, MoreHorizontal, Mail, Phone, MapPin, Crown, Star, ShoppingBag, Edit, Trash2, X, Save, UploadCloud, ImageIcon, User } from 'lucide-react';
 
-// Data Mock Customers dengan Bento Layout
+// Data Mock Customers
 const INITIAL_CUSTOMERS = [
   { 
     id: 1, 
@@ -12,7 +12,7 @@ const INITIAL_CUSTOMERS = [
     phone: '+62 811-2233-4455',
     status: 'VIP',
     image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600&auto=format&fit=crop&q=60',
-    size: 'large', // 2x2 Big Card (Top Spender)
+    size: 'large', // 2x2
     stats: { totalSpent: 15400000, visits: 42, lastVisit: 'Hari ini' }
   },
   { 
@@ -22,7 +22,7 @@ const INITIAL_CUSTOMERS = [
     phone: '+62 812-9876-5432',
     status: 'Member',
     image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&auto=format&fit=crop&q=60',
-    size: 'tall', // 1x2 Tall Card
+    size: 'tall', // 1x2
     stats: { totalSpent: 4500000, visits: 15, lastVisit: '3 hari lalu' }
   },
   { 
@@ -32,7 +32,7 @@ const INITIAL_CUSTOMERS = [
     phone: '+62 857-1234-5678',
     status: 'New',
     image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=60',
-    size: 'normal', // 1x1 Standard
+    size: 'normal', // 1x1
     stats: { totalSpent: 320000, visits: 2, lastVisit: '1 minggu lalu' }
   },
   { 
@@ -42,7 +42,7 @@ const INITIAL_CUSTOMERS = [
     phone: '+62 813-5555-6666',
     status: 'VIP',
     image: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=600&auto=format&fit=crop&q=60',
-    size: 'wide', // 2x1 Wide Card
+    size: 'wide', // 2x1
     stats: { totalSpent: 8900000, visits: 28, lastVisit: 'Kemarin' }
   },
   { 
@@ -107,8 +107,6 @@ export default function CustomersPage() {
 
   const handleSave = (e) => {
     e.preventDefault();
-    
-    // Default image jika kosong
     const finalImage = formData.image || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=600&auto=format&fit=crop&q=60';
 
     if (isEditing) {
@@ -174,10 +172,10 @@ export default function CustomersPage() {
          </div>
       </div>
 
-      {/* Bento Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-4 auto-rows-[180px] gap-4">
+      {/* Bento Grid Layout - UPDATED HEIGHT */}
+      <div className="grid grid-cols-1 md:grid-cols-4 auto-rows-[200px] gap-4">
         
-        {/* 'Add New' Placeholder Card */}
+        {/* 'Add New' Placeholder */}
         <div 
             onClick={handleAdd}
             className="md:col-span-1 md:row-span-1 border-2 border-dashed border-gray-300 rounded-3xl flex flex-col items-center justify-center text-gray-400 hover:border-orange-400 hover:text-orange-500 hover:bg-orange-50/50 transition-all cursor-pointer bg-gray-50/50 group"
@@ -223,11 +221,12 @@ export default function CustomersPage() {
                              <Crown size={12} fill="currentColor" /> VIP MEMBER
                         </span>
                     </div>
-                    <div className="absolute bottom-0 left-0 p-6 text-white w-full">
+                    {/* UPDATED: Added pb-8 to give more space from bottom */}
+                    <div className="absolute bottom-0 left-0 p-6 pb-8 text-white w-full">
                         <div className="flex items-end justify-between">
                             <div>
                                 <p className="text-orange-300 font-medium text-xs mb-1 uppercase tracking-wider">Top Spender</p>
-                                <h3 className="text-3xl font-bold mb-2">{customer.name}</h3>
+                                <h3 className="text-3xl font-bold mb-2 leading-tight">{customer.name}</h3>
                                 <div className="flex flex-col gap-1 text-sm text-gray-300">
                                     <span className="flex items-center gap-2"><Mail size={14} /> {customer.email}</span>
                                 </div>
@@ -241,7 +240,8 @@ export default function CustomersPage() {
                 </>
             ) : (
                 // TYPE 2: STANDARD/TALL/WIDE CARDS
-                <div className="h-full flex flex-col p-5">
+                // UPDATED: Added min-w-0 for truncating & pb-6 for spacing
+                <div className="h-full flex flex-col p-5 pb-6">
                     <div className="flex justify-between items-start mb-3">
                         <div className="flex items-center gap-3 min-w-0">
                             <img src={customer.image} alt={customer.name} className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm flex-shrink-0" />
@@ -287,7 +287,7 @@ export default function CustomersPage() {
         ))}
       </div>
 
-      {/* --- Modal Form CRUD (RESPONSIVE FIX) --- */}
+      {/* --- Modal Form CRUD (FIXED RESPONSIVE) --- */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
@@ -301,7 +301,7 @@ export default function CustomersPage() {
               </button>
             </div>
 
-            {/* Form - Scrollable Area */}
+            {/* Form - Scrollable */}
             <form onSubmit={handleSave} className="flex flex-col flex-1 min-h-0">
               <div className="p-6 space-y-6 overflow-y-auto">
                 <div className="flex flex-col md:flex-row gap-6">
