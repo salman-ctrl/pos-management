@@ -76,7 +76,7 @@ export default function LoginPage() {
                   src={img} 
                   alt="Login Visual" 
                   fill 
-                  className="object-cover hover:scale-110 transition-transform duration-700"
+                  className="object-cover  transition-transform duration-700"
                 />
               </div>
             ))}
@@ -91,7 +91,7 @@ export default function LoginPage() {
                   src={img} 
                   alt="Login Visual" 
                   fill 
-                  className="object-cover hover:scale-110 transition-transform duration-700"
+                  className="object-cover  transition-transform duration-700"
                 />
               </div>
             ))}
