@@ -1,38 +1,36 @@
 "use client";
 
-import { useState } from 'react';
-import "../globals.css";
-import Sidebar from '@/components/Sidebar';
-import Header from '@/components/Header';
+import { useState } from "react";
+import Sidebar from "@/components/Sidebar";
+import AuthGuard from "@/components/AuthGuard";
 
-export default function RootLayout({ children }) {
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
+export default function AdminLayout({ children }) {
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   return (
-    <html lang="id">
-      <body className="antialiased">
-        <div className="flex h-screen bg-[var(--color-bg-main)] font-sans overflow-hidden">
-          
-          {/* Sidebar (Kiri) */}
-          <Sidebar 
-            isMobileOpen={isSidebarOpen} 
-            setIsMobileOpen={setSidebarOpen} 
-          />
+    <AuthGuard>
+      <div className="flex h-screen bg-gray-50">
+        <Sidebar 
+          isMobileOpen={isMobileOpen} 
+          setIsMobileOpen={setIsMobileOpen} 
+        />
 
-          {/* Area Konten Utama (Kanan) */}
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-            <Header toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
-            
-            {/* Render Halaman Dinamis disini */}
-            <main className="flex-1 overflow-auto p-4 lg:p-8">
-              <div className="max-w-7xl mx-auto">
-                {children}
-              </div>
-            </main>
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <div className="lg:hidden p-4 bg-white border-b border-gray-200 flex items-center justify-between">
+             <span className="font-bold text-gray-800">Menu</span>
+             <button 
+                onClick={() => setIsMobileOpen(true)}
+                className="p-2 bg-gray-100 rounded-lg text-gray-600"
+             >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+             </button>
           </div>
 
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            {children}
+          </main>
         </div>
-      </body>
-    </html>
+      </div>
+    </AuthGuard>
   );
 }

@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect, Suspense } from 'react';
-import { ArrowRight, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { ArrowRight, ArrowLeft, ShieldCheck, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { showAlert } from '@/utils/swal';
 
-// Komponen OTP dibungkus Suspense agar aman di Next.js saat baca searchParams
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 function OTPForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -15,23 +17,45 @@ function OTPForm() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Ambil email dari URL, kalau gak ada pake default
     const emailParam = searchParams.get('email');
-    if (emailParam) {
-        setEmail(emailParam);
-    }
+    if (emailParam) setEmail(emailParam);
   }, [searchParams]);
 
-  const handleOtpSubmit = (e) => {
+  const handleOtpSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulasi Verifikasi
-    setTimeout(() => {
+    try {
+        const res = await fetch(`${API_URL}/api/auth/verify-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, otp: otpCode })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+
+            showAlert.success("Berhasil", "Anda berhasil masuk!");
+            
+            if (data.user.role === 'ADMIN') {
+                router.push('/categories');
+            } else {
+                router.push('/pos'); 
+            }
+
+        } else {
+            showAlert.error("Gagal", data.message || "Kode OTP salah atau kadaluarsa.");
+        }
+
+    } catch (error) {
+        console.error(error);
+        showAlert.error("Error", "Gagal verifikasi ke server.");
+    } finally {
         setIsLoading(false);
-        // Login Sukses -> Masuk Dashboard
-        router.push('/'); 
-    }, 1500);
+    }
   };
 
   return (
@@ -73,14 +97,7 @@ function OTPForm() {
                 disabled={isLoading || otpCode.length < 6}
                 className="w-full py-4 px-6 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-bold text-lg shadow-xl shadow-orange-200 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
             >
-                {isLoading ? (
-                    <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                ) : (
-                    <>
-                        Verifikasi
-                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </>
-                )}
+                {isLoading ? <Loader2 className="animate-spin"/> : <>Verifikasi <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" /></>}
             </button>
         </form>
 

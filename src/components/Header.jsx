@@ -7,7 +7,6 @@ export default function Header({ toggleSidebar }) {
   const [currentDate, setCurrentDate] = useState('');
 
   useEffect(() => {
-    // Fungsi untuk mendapatkan tanggal format Indonesia (Contoh: Rabu, 21 Jan 2026)
     const updateDate = () => {
       const now = new Date();
       const options = { 
@@ -21,7 +20,6 @@ export default function Header({ toggleSidebar }) {
 
     updateDate();
     
-    // Update setiap menit (opsional, untuk memastikan pergantian hari real-time)
     const interval = setInterval(updateDate, 60000);
     return () => clearInterval(interval);
   }, []);

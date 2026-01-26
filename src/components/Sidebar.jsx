@@ -1,12 +1,16 @@
 "use client";
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { 
   LayoutDashboard, Package, ShoppingCart, Users, Settings, 
   ChevronDown, Box, ClipboardList, UserCircle, LogOut 
 } from 'lucide-react';
+// Import Store untuk Auth & User Data
+import { useStore } from '../store/useStore';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 const SidebarItem = ({ icon: Icon, label, href, hasSubmenu, isOpen, onClick }) => {
   const pathname = usePathname();
@@ -37,6 +41,8 @@ const SidebarItem = ({ icon: Icon, label, href, hasSubmenu, isOpen, onClick }) =
 };
 
 export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
+  const router = useRouter();
+  const { user, logout } = useStore(); // Ambil data user & fungsi logout dari Zustand
   const [expandedMenu, setExpandedMenu] = useState({ inventory: true });
   const pathname = usePathname();
 
@@ -51,6 +57,20 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
     }
   };
 
+  // Fungsi Logout
+  const handleLogout = () => {
+    if (confirm('Apakah Anda yakin ingin keluar dari aplikasi?')) {
+        logout(); // Hapus token & user dari store
+        router.push('/login'); // Redirect ke login
+    }
+  };
+
+  // Helper Gambar Profil
+  const getImageUrl = (path) => {
+      if (!path) return null;
+      return path.startsWith('http') ? path : `${API_URL}${path}`;
+  };
+
   return (
     <>
       <aside 
@@ -59,7 +79,6 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
         }`}
       >
         <div className="h-full flex flex-col">
-          {/* Logo */}
           <div className="h-16 flex items-center px-6 border-b border-gray-100">
             <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center mr-3">
               <Package className="text-white" size={20} />
@@ -67,13 +86,11 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
             <h1 className="text-xl font-bold text-gray-800 tracking-tight">POS System</h1>
           </div>
 
-          {/* Navigation */}
           <div className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
             <div onClick={handleLinkClick}>
               <SidebarItem icon={LayoutDashboard} label="Dashboard" href="/" />
             </div>
 
-            {/* Inventory Group */}
             <div className="pt-4 pb-2">
               <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Inventory</p>
               <SidebarItem 
@@ -87,7 +104,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
                 <div className="ml-4 pl-4 border-l border-gray-200 space-y-1 mt-1 mb-2" onClick={handleLinkClick}>
                   <Link href="/products" className={`block w-full text-left px-4 py-2 text-sm rounded-lg transition-colors ${pathname === '/products' ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-gray-800'}`}>Daftar Produk</Link>
                   <Link href="/categories" className={`block w-full text-left px-4 py-2 text-sm rounded-lg transition-colors ${pathname === '/categories' ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-gray-800'}`}>Kategori</Link>
-                  <Link href="/stock" className={`block w-full text-left px-4 py-2 text-sm rounded-lg transition-colors ${pathname === '/stock' ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-gray-800'}`}>Riwayat Stok</Link>
+                  <Link href="/stock" className={`block w-full text-left px-4 py-2 text-sm rounded-lg transition-colors ${pathname === '/inventory' ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-gray-800'}`}>Riwayat Stok</Link>
                 </div>
               )}
             </div>
@@ -97,7 +114,6 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
               <SidebarItem icon={ClipboardList} label="Laporan" href="/reports" />
             </div>
 
-             {/* People Group */}
              <div className="pt-4 pb-2">
               <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">People</p>
               <div onClick={handleLinkClick}>
@@ -111,17 +127,24 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
             </div>
           </div>
 
-          {/* User Profile (Bottom) */}
           <div className="p-4 border-t border-gray-100">
             <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
-              <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold">
-                AD
+              <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold overflow-hidden">
+                {user?.imageUrl ? (
+                    <img src={getImageUrl(user.imageUrl)} alt={user.name} className="w-full h-full object-cover"/>
+                ) : (
+                    <span>{user?.name?.charAt(0).toUpperCase() || 'U'}</span>
+                )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">Admin Owner</p>
-                <p className="text-xs text-gray-500 truncate">Super Admin</p>
+                <p className="text-sm font-medium text-gray-900 truncate">{user?.name || 'Guest'}</p>
+                <p className="text-xs text-gray-500 truncate">{user?.role || 'Staff'}</p>
               </div>
-              <button className="text-gray-400 hover:text-red-500">
+              <button 
+                onClick={handleLogout} 
+                className="text-gray-400 hover:text-red-500 transition-colors"
+                title="Keluar"
+              >
                 <LogOut size={18} />
               </button>
             </div>
@@ -129,7 +152,6 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
         </div>
       </aside>
 
-      {/* Mobile Overlay */}
       {isMobileOpen && (
         <div 
           className="fixed inset-0 bg-black/20 z-40 lg:hidden"

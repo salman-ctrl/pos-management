@@ -1,87 +1,259 @@
-import { Search, Filter } from 'lucide-react';
+"use client";
 
-const TRANSACTIONS = [
+import { useState, useEffect } from 'react';
+import { Search, Filter, ChevronLeft, ChevronRight, Eye, RefreshCw, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
+import TransactionDetailModal from '@/components/TransactionDetailModal';
 
-  { id: 'INV-00123', date: '20 Jan 2026, 14:20', cashier: 'Budi Santoso', total: 45000, method: 'QRIS', status: 'PAID' },
-  { id: 'INV-00122', date: '20 Jan 2026, 14:15', cashier: 'Siti Aminah', total: 120000, method: 'CASH', status: 'PAID' },
-  { id: 'INV-00121', date: '20 Jan 2026, 13:58', cashier: 'Budi Santoso', total: 32500, method: 'CASH', status: 'PENDING' },
-  { id: 'INV-00120', date: '20 Jan 2026, 13:45', cashier: 'Andi Pratama', total: 78000, method: 'QRIS', status: 'PAID' },
-  { id: 'INV-00119', date: '20 Jan 2026, 13:30', cashier: 'Siti Aminah', total: 56000, method: 'CASH', status: 'PAID' },
-  { id: 'INV-00118', date: '20 Jan 2026, 13:12', cashier: 'Budi Santoso', total: 99000, method: 'QRIS', status: 'PAID' },
-  { id: 'INV-00117', date: '20 Jan 2026, 12:55', cashier: 'Andi Pratama', total: 41000, method: 'CASH', status: 'PENDING' },
-  { id: 'INV-00116', date: '20 Jan 2026, 12:40', cashier: 'Siti Aminah', total: 150000, method: 'QRIS', status: 'PAID' },
-  { id: 'INV-00115', date: '20 Jan 2026, 12:25', cashier: 'Budi Santoso', total: 67000, method: 'CASH', status: 'PAID' },
-  { id: 'INV-00114', date: '20 Jan 2026, 12:10', cashier: 'Andi Pratama', total: 23000, method: 'CASH', status: 'PAID' },
-];
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function TransactionsPage() {
+  const [transactions, setTransactions] = useState([]);
+  const [meta, setMeta] = useState({ page: 1, totalPages: 1, total: 0 });
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const fetchTransactions = async (page = 1) => {
+    setIsLoading(true);
+    try {
+        const token = localStorage.getItem('token');
+        const headers = { 'Authorization': `Bearer ${token}` };
+        
+        const params = new URLSearchParams({
+            page: page,
+            limit: 10, 
+        });
+
+        if (search) params.append('search', search);
+        if (statusFilter) params.append('status', statusFilter);
+        if (startDate && endDate) {
+            params.append('startDate', startDate);
+            params.append('endDate', endDate);
+        }
+
+        const res = await fetch(`${API_URL}/api/transactions?${params.toString()}`, { headers });
+        const json = await res.json();
+
+        if (json.success) {
+            setTransactions(json.data);
+            setMeta(json.meta || { page: 1, totalPages: 1, total: 0 }); 
+        }
+    } catch (error) {
+        console.error("Gagal load transaksi:", error);
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+        fetchTransactions(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search, statusFilter, startDate, endDate]);
+  
+  const handlePageChange = (newPage) => {
+      if (newPage >= 1 && newPage <= meta.totalPages) {
+          fetchTransactions(newPage);
+      }
+  };
+
+  const handleOpenDetail = async (id) => {
+      try {
+          const token = localStorage.getItem('token');
+          const res = await fetch(`${API_URL}/api/transactions/${id}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const json = await res.json();
+          if (json.success) {
+              setSelectedTransaction(json.data);
+              setIsModalOpen(true);
+          }
+      } catch (error) {
+          console.error(error);
+          alert("Gagal memuat detail transaksi");
+      }
+  };
+
+  const formatRp = (num) => "Rp " + (Number(num) || 0).toLocaleString('id-ID');
+  const formatDate = (dateStr) => new Date(dateStr).toLocaleString('id-ID', {
+      day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-        {/* Summary Stats Mini */}
-        <div className="flex gap-4 overflow-x-auto pb-2 sm:pb-0">
-          <div className="text-center px-4 border-r border-gray-100">
-            <p className="text-xs text-gray-500 uppercase">Total Omzet</p>
-            <p className="text-lg font-bold text-gray-800">Rp 5.240.000</p>
+        <div className="flex gap-6 overflow-x-auto pb-2 sm:pb-0 items-center">
+          <div className="px-2">
+            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Total Data</p>
+            <p className="text-xl font-black text-gray-800">{meta.total} <span className="text-sm font-normal text-gray-400">Transaksi</span></p>
           </div>
-          <div className="text-center px-4">
-            <p className="text-xs text-gray-500 uppercase">Total Transaksi</p>
-            <p className="text-lg font-bold text-gray-800">48</p>
+          <div className="h-8 w-[1px] bg-gray-200"></div>
+          <div className="px-2">
+            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Status</p>
+            <p className="text-sm font-medium text-gray-600 flex items-center gap-1">
+                {statusFilter ? statusFilter : 'Semua'}
+            </p>
           </div>
         </div>
         
-        {/* Search & Filter */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
+           {/* Date Filter */}
+           <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+               <CalendarIcon size={14} className="text-gray-400"/>
+               <input 
+                 type="date" 
+                 value={startDate}
+                 onChange={(e) => setStartDate(e.target.value)}
+                 className="bg-transparent text-xs outline-none w-24 text-gray-600"
+               />
+               <span className="text-gray-300">-</span>
+               <input 
+                 type="date" 
+                 value={endDate}
+                 onChange={(e) => setEndDate(e.target.value)}
+                 className="bg-transparent text-xs outline-none w-24 text-gray-600"
+               />
+           </div>
+
+           <select 
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-orange-500"
+           >
+               <option value="">Semua Status</option>
+               <option value="PAID">Lunas (PAID)</option>
+               <option value="PENDING">Pending</option>
+               <option value="CANCELLED">Batal</option>
+           </select>
+
            <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-            <input type="text" placeholder="No. Invoice..." className="pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-orange-500" />
+            <input 
+                type="text" 
+                placeholder="Cari Invoice..." 
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-orange-500 w-40 sm:w-auto" 
+            />
            </div>
-           <button className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 text-sm transition-colors">
-             <Filter size={16} /> Filter
+           
+           <button onClick={() => fetchTransactions(1)} className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors">
+               <RefreshCw size={18}/>
            </button>
         </div>
       </div>
 
-      <div className="card-base overflow-x-auto">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-50 text-gray-500 uppercase text-xs border-b border-gray-100">
-            <tr>
-              <th className="px-6 py-4 font-semibold">Invoice</th>
-              <th className="px-6 py-4 font-semibold">Waktu</th>
-              <th className="px-6 py-4 font-semibold">Kasir</th>
-              <th className="px-6 py-4 font-semibold">Metode</th>
-              <th className="px-6 py-4 font-semibold">Total</th>
-              <th className="px-6 py-4 font-semibold">Status</th>
-              <th className="px-6 py-4 font-semibold">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 bg-white">
-            {TRANSACTIONS.map((trx) => (
-              <tr key={trx.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 font-medium text-orange-600">{trx.id}</td>
-                <td className="px-6 py-4 text-gray-500 text-xs">{trx.date}</td>
-                <td className="px-6 py-4 text-gray-800">{trx.cashier}</td>
-                <td className="px-6 py-4">
-                  <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium">{trx.method}</span>
-                </td>
-                <td className="px-6 py-4 font-bold text-gray-800">
-                  Rp {trx.total.toLocaleString('id-ID')}
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    trx.status === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                  }`}>
-                    {trx.status === 'PAID' ? 'Lunas' : 'Pending'}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <button className="text-gray-400 hover:text-orange-500 font-medium text-xs">Detail</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="card-base overflow-hidden">
+        <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+            <thead className="bg-gray-50 text-gray-500 uppercase text-xs border-b border-gray-100">
+                <tr>
+                <th className="px-6 py-4 font-semibold">No</th>
+                <th className="px-6 py-4 font-semibold">Invoice</th>
+                <th className="px-6 py-4 font-semibold">Waktu</th>
+                <th className="px-6 py-4 font-semibold">Pelanggan</th>
+                <th className="px-6 py-4 font-semibold">Total</th>
+                <th className="px-6 py-4 font-semibold">Metode</th>
+                <th className="px-6 py-4 font-semibold">Status</th>
+                <th className="px-6 py-4 font-semibold text-center">Aksi</th>
+                </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 bg-white">
+                {isLoading ? (
+                    <tr>
+                        <td colSpan="8" className="px-6 py-12 text-center text-gray-400">
+                            <div className="flex justify-center items-center gap-2">
+                                <Loader2 className="animate-spin" size={20}/> Memuat data transaksi...
+                            </div>
+                        </td>
+                    </tr>
+                ) : transactions.length === 0 ? (
+                    <tr>
+                        <td colSpan="8" className="px-6 py-12 text-center text-gray-400">Tidak ada transaksi ditemukan.</td>
+                    </tr>
+                ) : (
+                    transactions.map((trx, index) => (
+                    <tr key={trx.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 text-gray-400 text-xs">
+                            {(meta.page - 1) * meta.limit + index + 1}
+                        </td>
+                        <td className="px-6 py-4 font-bold text-gray-800 font-mono text-xs">
+                            {trx.invoiceNumber}
+                        </td>
+                        <td className="px-6 py-4 text-gray-500 text-xs whitespace-nowrap">
+                            {formatDate(trx.createdAt)}
+                        </td>
+                        <td className="px-6 py-4 text-gray-800 font-medium">
+                            {trx.customer ? trx.customer.name : 'Umum'}
+                        </td>
+                        <td className="px-6 py-4 font-bold text-gray-900">
+                            {formatRp(trx.grandTotal)}
+                        </td>
+                        <td className="px-6 py-4">
+                            <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-[10px] font-bold uppercase border border-gray-200">
+                                {trx.payments[0]?.paymentType || '-'}
+                            </span>
+                        </td>
+                        <td className="px-6 py-4">
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${
+                                trx.status === 'PAID' ? 'bg-green-50 text-green-600 border-green-100' : 
+                                trx.status === 'PENDING' ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
+                                'bg-red-50 text-red-600 border-red-100'
+                            }`}>
+                                {trx.status}
+                            </span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                            <button 
+                                onClick={() => handleOpenDetail(trx.id)}
+                                className="text-gray-400 hover:text-orange-500 font-medium p-2 hover:bg-orange-50 rounded-lg transition-colors"
+                                title="Lihat Detail"
+                            >
+                                <Eye size={18}/>
+                            </button>
+                        </td>
+                    </tr>
+                    ))
+                )}
+            </tbody>
+            </table>
+        </div>
+
+        <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/50">
+            <span className="text-xs text-gray-500">
+                Menampilkan halaman <span className="font-bold text-gray-800">{meta.page}</span> dari {meta.totalPages}
+            </span>
+            <div className="flex gap-2">
+                <button 
+                    onClick={() => handlePageChange(meta.page - 1)} 
+                    disabled={meta.page === 1}
+                    className="p-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <ChevronLeft size={16} />
+                </button>
+                <button 
+                    onClick={() => handlePageChange(meta.page + 1)} 
+                    disabled={meta.page === meta.totalPages}
+                    className="p-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <ChevronRight size={16} />
+                </button>
+            </div>
+        </div>
       </div>
+
+      <TransactionDetailModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        transaction={selectedTransaction}
+      />
     </div>
   );
 }

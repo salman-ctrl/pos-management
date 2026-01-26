@@ -13,7 +13,6 @@ import {
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 
-// Register Module Chart.js
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -25,7 +24,40 @@ ChartJS.register(
   Legend
 );
 
-export default function SalesChart() {
+export default function SalesChart({ data }) {
+  const labels = data && data.length > 0 
+    ? data.map(item => item.label) 
+    : ['Sn', 'Sl', 'Rb', 'Km', 'Jm', 'Sb', 'Mg'];
+
+  const values = data && data.length > 0 
+    ? data.map(item => item.total) 
+    : [0, 0, 0, 0, 0, 0, 0];
+
+  const chartData = {
+    labels: labels,
+    datasets: [
+      {
+        fill: true,
+        label: 'Penjualan',
+        data: values,
+        borderColor: '#f97316', 
+        backgroundColor: (context) => {
+          const ctx = context.chart.ctx;
+          const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+          gradient.addColorStop(0, 'rgba(249, 115, 22, 0.2)');
+          gradient.addColorStop(1, 'rgba(249, 115, 22, 0)');
+          return gradient;
+        },
+        pointBackgroundColor: '#fff',
+        pointBorderColor: '#f97316',
+        pointBorderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        tension: 0.4, 
+      },
+    ],
+  };
+
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -53,8 +85,11 @@ export default function SalesChart() {
         ticks: { 
           color: '#9ca3af',
           font: { size: 10 },
+          // Format angka jutaan/ribuan di sumbu Y
           callback: function(value) {
-            return (value / 1000) + 'k';
+            if(value >= 1000000) return (value / 1000000) + 'jt';
+            if(value >= 1000) return (value / 1000) + 'rb';
+            return value;
           }
         }
       },
@@ -63,28 +98,15 @@ export default function SalesChart() {
         ticks: { color: '#9ca3af', font: { size: 10 } }
       }
     },
-    elements: {
-      line: { tension: 0.4 } // Garis melengkung halus
-    }
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
   };
 
-  const data = {
-    labels: ['Sn', 'Sl', 'Rb', 'Km', 'Jm', 'Sb', 'Mg'],
-    datasets: [
-      {
-        fill: true,
-        label: 'Penjualan',
-        data: [120000, 190000, 150000, 250000, 220000, 300000, 280000],
-        borderColor: '#f97316', // Orange-500 Hex (approx)
-        backgroundColor: 'rgba(249, 115, 22, 0.1)',
-        pointBackgroundColor: '#fff',
-        pointBorderColor: '#f97316',
-        pointBorderWidth: 2,
-        pointRadius: 4,
-        pointHoverRadius: 6,
-      },
-    ],
-  };
-
-  return <Line options={options} data={data} />;
+  return (
+    <div style={{ width: '100%', height: '100%' }}>
+        <Line options={options} data={chartData} />
+    </div>
+  );
 }
