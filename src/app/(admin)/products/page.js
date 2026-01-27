@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import { Search, Plus, Edit, Trash2, Filter, ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import ProductModal from '@/components/ProductModal';
 import { showAlert } from '@/utils/swal';
@@ -11,11 +11,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 export default function ProductsPage() {
     const { products, categories, fetchDataMaster } = useStore();
 
-    // --- STATE UI & FILTER ---
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('Semua');
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 8; // Kamu bisa atur jumlah item per halaman di sini
+    const itemsPerPage = 8;
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
@@ -24,35 +23,30 @@ export default function ProductsPage() {
         fetchDataMaster();
     }, []);
 
-    // --- HELPER FOTO ---
+    // --- HELPER FOTO SANGAT PENTING ---
     const getImageUrl = (path) => {
         if (!path) return null;
-        // FIX BUG: Jika sudah link Cloudinary (http/https), jangan ditambah API_URL lagi
-        return path.startsWith('http') ? path : `${API_URL}${path}`;
+
+        // Jika path sudah merupakan URL lengkap (Cloudinary selalu mulai dengan http)
+        // Langsung kembalikan path-nya tanpa menambah API_URL
+        if (path.startsWith('http')) {
+            return path;
+        }
+
+        // Hanya tambahkan API_URL jika path-nya adalah path lokal (seperti /uploads/...)
+        return `${API_URL}${path}`;
     };
 
     const formatRp = (num) => "Rp " + (Number(num) || 0).toLocaleString('id-ID');
 
-    const getStockStatus = (stock) => {
-        if (stock === 0) return { label: 'Habis', color: 'bg-red-500 text-white' };
-        if (stock < 5) return { label: 'Menipis', color: 'bg-orange-500 text-white' };
-        return { label: `Stok: ${stock}`, color: 'bg-white/20 backdrop-blur-md text-white border border-white/20' };
-    }
-
-    const getSpanClass = (size) => {
-        switch (size) {
-            case 'large': return 'md:col-span-2 md:row-span-2';
-            case 'tall': return 'md:col-span-1 md:row-span-2';
-            case 'wide': return 'md:col-span-2 md:row-span-1';
-            default: return 'md:col-span-1 md:row-span-1';
-        }
-    }
-
-    // --- LOGIC FILTER & PAGINATION (FIX DISINI) ---
+    // --- LOGIC FILTER & PAGINATION ---
     const filteredProducts = useMemo(() => {
         return products.filter(product => {
-            const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (product.sku && product.sku.toLowerCase().includes(searchQuery.toLowerCase()));
+            const name = product.name || '';
+            const sku = product.sku || '';
+            const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                sku.toLowerCase().includes(searchQuery.toLowerCase());
+
             const categoryName = product.category ? product.category.name : 'Uncategorized';
             const matchesCategory = selectedCategory === 'Semua' || categoryName === selectedCategory;
 
@@ -60,8 +54,7 @@ export default function ProductsPage() {
         });
     }, [products, searchQuery, selectedCategory]);
 
-    // VARIABEL INI YANG DICARI OLEH ERROR TADI
-    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage) || 1;
     const startIndex = (currentPage - 1) * itemsPerPage;
     const currentProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
 
@@ -69,7 +62,6 @@ export default function ProductsPage() {
         if (page >= 1 && page <= totalPages) setCurrentPage(page);
     };
 
-    // --- ACTION HANDLERS ---
     const handleAdd = () => {
         setEditingProduct(null);
         setIsModalOpen(true);
@@ -81,37 +73,12 @@ export default function ProductsPage() {
         setIsModalOpen(true);
     };
 
-    const handleDelete = async (id, e) => {
-        e.stopPropagation();
-        const confirmed = await showAlert.confirm("Hapus Produk?", "Data akan dihapus permanen dari sistem.");
-
-        if (confirmed) {
-            try {
-                showAlert.loading("Menghapus data...");
-                const token = localStorage.getItem('token');
-                const res = await fetch(`${API_URL}/api/products/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (res.ok) {
-                    showAlert.success("Terhapus", "Produk berhasil dihapus.");
-                    fetchDataMaster();
-                } else {
-                    showAlert.error("Gagal", "Produk tidak bisa dihapus.");
-                }
-            } catch (error) {
-                showAlert.error("Error", "Koneksi ke server gagal.");
-            }
-        }
-    };
-
     const handleSaveProduct = async (formData) => {
         const token = localStorage.getItem('token');
         const data = new FormData();
 
         data.append('name', formData.name);
-        data.append('sku', formData.sku);
+        data.append('sku', formData.sku || '');
         data.append('price', formData.price);
         data.append('costPrice', formData.costPrice);
         data.append('stock', formData.stock);
@@ -141,10 +108,13 @@ export default function ProductsPage() {
             const result = await res.json();
 
             if (res.ok && result.success) {
-                // FIX BUG: Tutup modal & Alert Sukses
+                // TUTUP MODAL DULU
                 setIsModalOpen(false);
+
+                // TUNGGU DATA MASTER REFRESH SELESAI
+                await fetchDataMaster();
+
                 showAlert.success("Berhasil!", editingProduct ? "Menu diperbarui." : "Menu baru ditambahkan.");
-                fetchDataMaster();
             } else {
                 showAlert.error("Gagal", result.message || "Gagal menyimpan.");
             }
@@ -152,7 +122,6 @@ export default function ProductsPage() {
             showAlert.error("Error Jaringan", "Gagal menghubungi backend.");
         }
     };
-
     return (
         <div className="space-y-6">
             {/* Search & Filter Header */}
