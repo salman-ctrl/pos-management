@@ -5,56 +5,56 @@ import { showAlert } from '@/utils/swal';
 import { useRouter } from 'next/navigation';
 
 export default function Header({ search, setSearch, currentUser }) {
-  const router = useRouter();
+    const router = useRouter();
 
-  const handleLogout = async () => {
-    const isConfirmed = await showAlert.confirm(
-        'Keluar Kasir?', 
-        'Anda akan mengakhiri sesi kasir ini.',
-        'Ya, Keluar'
-    );
-    
-    if (isConfirmed) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        router.push('/login');
-    }
-  };
+    const handleLogout = async () => {
+        const isConfirmed = await showAlert.confirm(
+            'Keluar Kasir?',
+            'Anda akan mengakhiri sesi kasir ini.',
+            'Ya, Keluar'
+        );
 
-  return (
-    <header className="h-16 lg:h-20 px-4 lg:px-6 flex items-center justify-between flex-shrink-0 bg-white border-b border-gray-100 shadow-sm z-20">
-        <div className="flex items-center gap-3 lg:gap-4 w-full">
-            <div className="w-8 h-8 lg:w-10 lg:h-10 bg-orange-500 rounded-lg lg:rounded-xl flex items-center justify-center text-white shadow-orange-200 shadow-lg flex-shrink-0">
-                <Utensils size={20} strokeWidth={2.5} />
-            </div>
-            <div className="hidden lg:block">
-                <h1 className="text-xl font-bold leading-none tracking-tight">POS System</h1>
-                <p className="text-xs text-gray-400 font-medium mt-1">Savoria Bistro</p>
-            </div>
-            
-            {/* Search Bar */}
-            <div className="relative group flex-1 max-w-[200px] lg:max-w-xs ml-auto">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                <input 
-                    type="text" 
-                    placeholder="Cari menu..." 
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9 pr-4 py-2 bg-gray-100 border-none rounded-lg lg:rounded-xl text-xs lg:text-sm w-full focus:ring-2 focus:ring-orange-100 focus:bg-white transition-all outline-none font-medium placeholder:text-gray-400"
-                />
-            </div>
+        if (isConfirmed) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            router.push('/login');
+        }
+    };
 
-            {/* User Profile & Logout (Desktop) */}
-            <div className="hidden lg:flex items-center gap-3 border-l border-gray-100 pl-4">
-                <div className="text-right hidden xl:block">
-                    <p className="text-sm font-bold text-gray-800 leading-none">{currentUser?.name || 'Kasir'}</p>
-                    <p className="text-[10px] text-gray-500 font-medium">{currentUser?.role || 'Staff'}</p>
+    return (
+        <header className="h-16 lg:h-20 px-4 lg:px-6 flex items-center justify-between flex-shrink-0 bg-white border-b border-gray-100 shadow-sm z-20">
+            <div className="flex items-center gap-3 lg:gap-4 w-full">
+                <div className="w-8 h-8 lg:w-10 lg:h-10 bg-orange-500 rounded-lg lg:rounded-xl flex items-center justify-center text-white shadow-orange-200 shadow-lg flex-shrink-0">
+                    <Utensils size={20} strokeWidth={2.5} />
                 </div>
-                <button onClick={handleLogout} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Keluar">
-                    <LogOut size={20} />
-                </button>
+                <div className="hidden lg:block">
+                    <h1 className="text-xl font-bold leading-none tracking-tight">POS System</h1>
+                    <p className="text-xs text-gray-400 font-medium mt-1">Savoria Bistro</p>
+                </div>
+
+                {/* Search Bar */}
+                <div className="relative group flex-1 max-w-[200px] lg:max-w-xs ml-auto">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                    <input
+                        type="text"
+                        placeholder="Cari menu..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-9 pr-4 py-2 bg-gray-100 border-none rounded-lg lg:rounded-xl text-xs lg:text-sm w-full focus:ring-2 focus:ring-orange-100 focus:bg-white transition-all outline-none font-medium placeholder:text-gray-400"
+                    />
+                </div>
+
+                {/* User Profile & Logout (Desktop) */}
+                <div className="hidden lg:flex items-center gap-3 border-l border-gray-100 pl-4">
+                    <div className="text-right hidden xl:block">
+                        <p className="text-sm font-bold text-gray-800 leading-none">{currentUser?.name || 'Kasir'}</p>
+                        <p className="text-[10px] text-gray-500 font-medium">{currentUser?.role || 'Staff'}</p>
+                    </div>
+                    <button onClick={handleLogout} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Keluar">
+                        <LogOut size={20} />
+                    </button>
+                </div>
             </div>
-        </div>
-    </header>
-  );
+        </header>
+    );
 }

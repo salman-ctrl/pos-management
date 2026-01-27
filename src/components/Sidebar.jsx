@@ -3,9 +3,9 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { 
-  LayoutDashboard, Package, ShoppingCart, Users, Settings, 
-  ChevronDown, Box, ClipboardList, UserCircle, LogOut 
+import {
+  LayoutDashboard, Package, ShoppingCart, Users, Settings,
+  ChevronDown, Box, ClipboardList, UserCircle, LogOut
 } from 'lucide-react';
 // Import Store untuk Auth & User Data
 import { useStore } from '../store/useStore';
@@ -23,11 +23,10 @@ const SidebarItem = ({ icon: Icon, label, href, hasSubmenu, isOpen, onClick }) =
   return (
     <Wrapper
       {...props}
-      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group mb-1 ${
-        isActive || (hasSubmenu && isOpen)
-          ? 'bg-orange-50 text-orange-600 font-medium' 
-          : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'
-      }`}
+      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group mb-1 ${isActive || (hasSubmenu && isOpen)
+        ? 'bg-orange-50 text-orange-600 font-medium'
+        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'
+        }`}
     >
       <div className="flex items-center gap-3">
         <Icon size={20} className={isActive ? 'text-orange-500' : 'text-gray-400 group-hover:text-gray-600'} />
@@ -42,7 +41,7 @@ const SidebarItem = ({ icon: Icon, label, href, hasSubmenu, isOpen, onClick }) =
 
 export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
   const router = useRouter();
-  const { user, logout } = useStore(); // Ambil data user & fungsi logout dari Zustand
+  const { user, logout } = useStore();
   const [expandedMenu, setExpandedMenu] = useState({ inventory: true });
   const pathname = usePathname();
 
@@ -50,33 +49,29 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
     setExpandedMenu(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  // Helper untuk menutup mobile menu saat link diklik
   const handleLinkClick = () => {
     if (window.innerWidth < 1024) {
       setIsMobileOpen(false);
     }
   };
 
-  // Fungsi Logout
   const handleLogout = () => {
     if (confirm('Apakah Anda yakin ingin keluar dari aplikasi?')) {
-        logout(); // Hapus token & user dari store
-        router.push('/login'); // Redirect ke login
+      logout();
+      router.push('/login');
     }
   };
 
-  // Helper Gambar Profil
   const getImageUrl = (path) => {
-      if (!path) return null;
-      return path.startsWith('http') ? path : `${API_URL}${path}`;
+    if (!path) return null;
+    return path.startsWith('http') ? path : `${API_URL}${path}`;
   };
 
   return (
     <>
-      <aside 
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${
-          isMobileOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         <div className="h-full flex flex-col">
           <div className="h-16 flex items-center px-6 border-b border-gray-100">
@@ -93,12 +88,12 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
 
             <div className="pt-4 pb-2">
               <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Inventory</p>
-              <SidebarItem 
-                icon={Box} 
-                label="Produk & Stok" 
-                hasSubmenu 
+              <SidebarItem
+                icon={Box}
+                label="Produk & Stok"
+                hasSubmenu
                 isOpen={expandedMenu.inventory}
-                onClick={() => toggleSubmenu('inventory')} 
+                onClick={() => toggleSubmenu('inventory')}
               />
               {expandedMenu.inventory && (
                 <div className="ml-4 pl-4 border-l border-gray-200 space-y-1 mt-1 mb-2" onClick={handleLinkClick}>
@@ -114,14 +109,14 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
               <SidebarItem icon={ClipboardList} label="Laporan" href="/reports" />
             </div>
 
-             <div className="pt-4 pb-2">
+            <div className="pt-4 pb-2">
               <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">People</p>
               <div onClick={handleLinkClick}>
-                <SidebarItem icon={Users} label="Pengguna" href="/users" />
+                <SidebarItem icon={Users} label="Staff" href="/users" />
                 <SidebarItem icon={UserCircle} label="Pelanggan" href="/customers" />
               </div>
             </div>
-            
+
             <div className="pt-4" onClick={handleLinkClick}>
               <SidebarItem icon={Settings} label="Pengaturan" href="/settings" />
             </div>
@@ -131,17 +126,17 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
             <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
               <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold overflow-hidden">
                 {user?.imageUrl ? (
-                    <img src={getImageUrl(user.imageUrl)} alt={user.name} className="w-full h-full object-cover"/>
+                  <img src={getImageUrl(user.imageUrl)} alt={user.name} className="w-full h-full object-cover" />
                 ) : (
-                    <span>{user?.name?.charAt(0).toUpperCase() || 'U'}</span>
+                  <span>{user?.name?.charAt(0).toUpperCase() || 'U'}</span>
                 )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">{user?.name || 'Guest'}</p>
                 <p className="text-xs text-gray-500 truncate">{user?.role || 'Staff'}</p>
               </div>
-              <button 
-                onClick={handleLogout} 
+              <button
+                onClick={handleLogout}
                 className="text-gray-400 hover:text-red-500 transition-colors"
                 title="Keluar"
               >
@@ -153,7 +148,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
       </aside>
 
       {isMobileOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/20 z-40 lg:hidden"
           onClick={() => setIsMobileOpen(false)}
         ></div>
