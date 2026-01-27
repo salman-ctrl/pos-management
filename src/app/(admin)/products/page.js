@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Search, Plus, Edit, Trash2, ImageIcon, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
-// Menggunakan relative paths untuk menghindari kendala resolusi alias @/
+// Menggunakan relative paths untuk menghindari kendala resolusi alias @/ di beberapa environment
 import { useStore } from '../../../store/useStore';
 import ProductModal from '../../../components/ProductModal';
 import { showAlert } from '../../../utils/swal';
@@ -12,7 +12,6 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 export default function ProductsPage() {
     const { products, categories, fetchDataMaster } = useStore();
 
-    // --- STATE UI & FILTER ---
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('Semua');
     const [currentPage, setCurrentPage] = useState(1);
@@ -25,13 +24,17 @@ export default function ProductsPage() {
         fetchDataMaster();
     }, []);
 
-    // --- HELPER FUNCTIONS ---
-
+    // --- SOLUSI GAMBAR: Menangani link Cloudinary (//) dan link HTTP/HTTPS ---
     const getImageUrl = (path) => {
         if (!path) return null;
-        // Jika sudah link Cloudinary (HTTP/HTTPS), gunakan langsung
-        if (path.startsWith('http')) return path;
-        // Jika path lokal, tambahkan base URL API
+
+        // Cloudinary sering mengirim URL diawali // atau http
+        if (path.startsWith('http') || path.startsWith('//')) {
+            // Jika diawali //, kita beri https: agar menjadi link utuh yang valid
+            return path.startsWith('//') ? `https:${path}` : path;
+        }
+
+        // Jika path lokal lama (fallback untuk data lama di localhost)
         return `${API_URL}${path}`;
     };
 
@@ -52,7 +55,6 @@ export default function ProductsPage() {
         }
     }
 
-    // --- LOGIC FILTER & PAGINATION ---
     const filteredProducts = useMemo(() => {
         return products.filter(product => {
             const name = product.name || '';
@@ -75,7 +77,6 @@ export default function ProductsPage() {
         if (page >= 1 && page <= totalPages) setCurrentPage(page);
     };
 
-    // --- ACTION HANDLERS ---
     const handleAdd = () => {
         setEditingProduct(null);
         setIsModalOpen(true);
@@ -101,7 +102,7 @@ export default function ProductsPage() {
                 });
 
                 if (res.ok) {
-                    showAlert.success("Terhapus", "Produk berhasil dihapus.");
+                    showAlert.success("Terhapus", "Produk berhasil dibuang.");
                     fetchDataMaster();
                 } else {
                     showAlert.error("Gagal", "Produk tidak bisa dihapus.");
@@ -115,7 +116,6 @@ export default function ProductsPage() {
     const handleSaveProduct = async (formData) => {
         const token = localStorage.getItem('token');
         const data = new FormData();
-
         data.append('name', formData.name);
         data.append('sku', formData.sku || '');
         data.append('price', formData.price);
@@ -131,11 +131,7 @@ export default function ProductsPage() {
 
         try {
             showAlert.loading("Sedang menyimpan...");
-
-            const url = editingProduct
-                ? `${API_URL}/api/products/${editingProduct.id}`
-                : `${API_URL}/api/products`;
-
+            const url = editingProduct ? `${API_URL}/api/products/${editingProduct.id}` : `${API_URL}/api/products`;
             const method = editingProduct ? 'PUT' : 'POST';
 
             const res = await fetch(url, {
@@ -147,11 +143,13 @@ export default function ProductsPage() {
             const result = await res.json();
 
             if (res.ok && result.success) {
+                // TUTUP MODAL OTOMATIS
                 setIsModalOpen(false);
+                // REFRESH DATA DARI SERVER
                 await fetchDataMaster();
                 showAlert.success("Berhasil!", editingProduct ? "Menu diperbarui." : "Menu baru ditambahkan.");
             } else {
-                showAlert.error("Gagal", result.message || "Gagal menyimpan.");
+                showAlert.error("Gagal", result.message || "Cek kembali data input.");
             }
         } catch (error) {
             showAlert.error("Error Jaringan", "Gagal menghubungi backend.");
@@ -160,7 +158,7 @@ export default function ProductsPage() {
 
     return (
         <div className="space-y-6">
-            {/* Header Bagian Atas */}
+            {/* Header & Filter */}
             <div className="flex flex-col md:flex-row justify-between gap-4">
                 <div className="flex flex-1 gap-2 max-w-2xl">
                     <div className="relative flex-1">
@@ -170,7 +168,7 @@ export default function ProductsPage() {
                             placeholder="Cari menu / SKU..."
                             value={searchQuery}
                             onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 transition-all shadow-sm"
+                            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl outline-none focus:border-orange-500 shadow-sm transition-all"
                         />
                     </div>
                     <div className="relative">
@@ -187,13 +185,12 @@ export default function ProductsPage() {
                         <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                     </div>
                 </div>
-
-                <button onClick={handleAdd} className="flex items-center gap-2 px-6 py-2 bg-orange-500 text-white rounded-xl hover:bg-orange-600 shadow-md shadow-orange-100 transition-all active:scale-95">
+                <button onClick={handleAdd} className="flex items-center gap-2 px-6 py-2 bg-orange-500 text-white rounded-xl font-bold shadow-lg shadow-orange-100 transition-all active:scale-95">
                     <Plus size={18} /> Tambah Menu
                 </button>
             </div>
 
-            {/* Grid List Produk */}
+            {/* Bento Grid Produk */}
             <div className="grid grid-cols-1 md:grid-cols-4 auto-rows-[200px] gap-4">
                 {/* Tombol Cepat Tambah Produk */}
                 {currentPage === 1 && !searchQuery && selectedCategory === 'Semua' && (
@@ -216,30 +213,29 @@ export default function ProductsPage() {
                             ) : (
                                 <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-300"><ImageIcon size={48} /></div>
                             )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
                         </div>
 
-                        <div className="absolute top-3 right-3 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={(e) => handleEdit(item, e)} className="p-2 rounded-full bg-white/90 backdrop-blur-sm text-gray-600 hover:text-orange-500 shadow-sm"><Edit size={16} /></button>
-                            <button onClick={(e) => handleDelete(item.id, e)} className="p-2 rounded-full bg-white/90 backdrop-blur-sm text-gray-600 hover:text-red-500 shadow-sm"><Trash2 size={16} /></button>
-                        </div>
-
-                        <div className="absolute top-3 left-3">
+                        {/* Status Label (Top Left) */}
+                        <div className="absolute top-3 left-3 flex gap-2">
                             <span className="px-2 py-1 bg-white/20 backdrop-blur-md text-white text-[10px] font-bold rounded-lg border border-white/20 uppercase tracking-wider">
                                 {item.category ? item.category.name : 'Umum'}
                             </span>
                         </div>
 
-                        <div className="absolute bottom-0 left-0 w-full p-5 text-white">
-                            <div className="flex justify-between items-end">
-                                <div className="flex-1 min-w-0 mr-4">
-                                    <h3 className="font-bold text-lg leading-tight mb-1 truncate">{item.name}</h3>
-                                    <p className="text-gray-300 text-[10px] font-mono mb-2 opacity-80 uppercase">{item.sku}</p>
-                                    <p className="font-bold text-xl text-orange-400">{formatRp(item.price)}</p>
-                                </div>
-                                <div className={`px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-sm whitespace-nowrap ${getStockStatus(item.stock).color}`}>
-                                    {getStockStatus(item.stock).label}
-                                </div>
+                        {/* Hover Actions (Top Right) */}
+                        <div className="absolute top-3 right-3 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                            <button onClick={(e) => handleEdit(item, e)} className="p-2 bg-white/90 rounded-full text-gray-700 hover:text-orange-500 shadow-sm"><Edit size={14} /></button>
+                            <button onClick={(e) => handleDelete(item.id, e)} className="p-2 bg-white/90 rounded-full text-gray-700 hover:text-red-500 shadow-sm"><Trash2 size={14} /></button>
+                        </div>
+
+                        {/* Bottom Info */}
+                        <div className="absolute bottom-0 p-5 text-white w-full">
+                            <h3 className="font-bold text-lg leading-tight truncate">{item.name}</h3>
+                            <p className="text-gray-300 text-[10px] font-mono mb-2 opacity-80 uppercase">{item.sku}</p>
+                            <p className="text-orange-400 font-black text-xl">{formatRp(item.price)}</p>
+                            <div className={`mt-2 inline-block px-2 py-0.5 rounded text-[10px] font-bold shadow-sm whitespace-nowrap ${getStockStatus(item.stock).color}`}>
+                                {getStockStatus(item.stock).label}
                             </div>
                         </div>
                     </div>
@@ -249,9 +245,9 @@ export default function ProductsPage() {
             {/* Pagination Controls */}
             {totalPages > 1 && (
                 <div className="flex justify-center items-center gap-4 pt-6 border-t border-gray-100">
-                    <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="p-2 rounded-xl border border-gray-200 disabled:opacity-30 hover:bg-gray-50 transition-colors"><ChevronLeft size={20} /></button>
+                    <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="p-2 border rounded-xl border-gray-200 disabled:opacity-30 hover:bg-gray-50 transition-colors"><ChevronLeft size={20} /></button>
                     <span className="text-sm font-medium text-gray-600">Halaman <span className="text-orange-500 font-bold">{currentPage}</span> dari {totalPages}</span>
-                    <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="p-2 rounded-xl border border-gray-200 disabled:opacity-30 hover:bg-gray-50 transition-colors"><ChevronRight size={20} /></button>
+                    <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="p-2 border rounded-xl border-gray-200 disabled:opacity-30 hover:bg-gray-50 transition-colors"><ChevronRight size={20} /></button>
                 </div>
             )}
 
