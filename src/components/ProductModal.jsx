@@ -144,7 +144,6 @@ export default function ProductModal({ isOpen, onClose, onSave, initialData, cat
                       type="text"
                       value={formData.sku}
                       onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                      disabled
                       className="..."
                       placeholder="Otomatis (Kosongkan)"
                     />
