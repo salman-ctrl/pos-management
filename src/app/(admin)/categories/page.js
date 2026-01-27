@@ -19,7 +19,6 @@ export default function CategoriesPage() {
         fetchDataMaster();
     }, []);
 
-    // --- LOGIKA HELPER GAMBAR SAKTI ---
     const getImageUrl = (path) => {
         if (!path) return null;
         if (path.startsWith('http') || path.startsWith('//')) {
@@ -56,7 +55,6 @@ export default function CategoriesPage() {
     const handleDelete = async (id, e) => {
         e.stopPropagation();
 
-        // Pakai SweetAlert Konfirmasi
         const confirmed = await showAlert.confirm(
             "Hapus Kategori?",
             "PERHATIAN: Kategori hanya bisa dihapus jika tidak memiliki produk di dalamnya."
@@ -77,7 +75,7 @@ export default function CategoriesPage() {
                     showAlert.success("Terhapus!", "Kategori berhasil dihilangkan.");
                     await fetchDataMaster();
                 } else {
-                    // Tampilkan pesan error spesifik dari backend (misal: masih ada produk)
+
                     showAlert.error("Gagal Hapus", result.message || "Pastikan kategori sudah kosong dari produk sebelum dihapus.");
                 }
             } catch (error) {

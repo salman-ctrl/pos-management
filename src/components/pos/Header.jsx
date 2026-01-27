@@ -32,7 +32,6 @@ export default function Header({ search, setSearch, currentUser }) {
                     <p className="text-xs text-gray-400 font-medium mt-1">Savoria Bistro</p>
                 </div>
 
-                {/* Search Bar */}
                 <div className="relative group flex-1 max-w-[200px] lg:max-w-xs ml-auto">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <input
@@ -44,7 +43,6 @@ export default function Header({ search, setSearch, currentUser }) {
                     />
                 </div>
 
-                {/* User Profile & Logout (Desktop) */}
                 <div className="hidden lg:flex items-center gap-3 border-l border-gray-100 pl-4">
                     <div className="text-right hidden xl:block">
                         <p className="text-sm font-bold text-gray-800 leading-none">{currentUser?.name || 'Kasir'}</p>

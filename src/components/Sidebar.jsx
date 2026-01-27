@@ -1,62 +1,74 @@
 "use client";
 
+import React, { useState, useEffect } from 'react';
+import {
+  LayoutDashboard, ShoppingCart, Users, Settings,
+  ChevronDown, Box, ClipboardList, UserCircle, LogOut, Utensils
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
-import {
-  LayoutDashboard, Package, ShoppingCart, Users, Settings,
-  ChevronDown, Box, ClipboardList, UserCircle, LogOut
-} from 'lucide-react';
-// Import Store untuk Auth & User Data
 import { useStore } from '../store/useStore';
+import { showAlert } from '../utils/swal';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 const SidebarItem = ({ icon: Icon, label, href, hasSubmenu, isOpen, onClick }) => {
   const pathname = usePathname();
-  // Cek apakah URL aktif (exact match atau nested)
   const isActive = href ? pathname === href : false;
 
-  const Wrapper = href ? Link : 'button';
-  const props = href ? { href } : { onClick };
+  const content = (
+    <div className="flex items-center gap-3">
+      <Icon size={20} className={isActive ? 'text-orange-500' : 'text-gray-400 group-hover:text-gray-600'} />
+      <span>{label}</span>
+    </div>
+  );
+
+  const className = `w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group mb-1 ${isActive || (hasSubmenu && isOpen)
+      ? 'bg-orange-50 text-orange-600 font-bold'
+      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 font-medium'
+    }`;
+
+  if (href) {
+    return (
+      <Link href={href} className={className}>
+        {content}
+      </Link>
+    );
+  }
 
   return (
-    <Wrapper
-      {...props}
-      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group mb-1 ${isActive || (hasSubmenu && isOpen)
-        ? 'bg-orange-50 text-orange-600 font-medium'
-        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'
-        }`}
-    >
-      <div className="flex items-center gap-3">
-        <Icon size={20} className={isActive ? 'text-orange-500' : 'text-gray-400 group-hover:text-gray-600'} />
-        <span>{label}</span>
-      </div>
+    <button onClick={onClick} className={className}>
+      {content}
       {hasSubmenu && (
         <ChevronDown size={16} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       )}
-    </Wrapper>
+    </button>
   );
 };
 
 export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
   const router = useRouter();
-  const { user, logout } = useStore();
-  const [expandedMenu, setExpandedMenu] = useState({ inventory: true });
   const pathname = usePathname();
+
+  // Menggunakan selector reaktif dari Zustand Store
+  const user = useStore((state) => state.user);
+  const logout = useStore((state) => state.logout);
+
+  const [mounted, setMounted] = useState(false);
+  const [expandedMenu, setExpandedMenu] = useState({ inventory: true });
+
+  // Pastikan komponen sudah terpasang (mounted) untuk menghindari error hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const toggleSubmenu = (key) => {
     setExpandedMenu(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleLinkClick = () => {
-    if (window.innerWidth < 1024) {
-      setIsMobileOpen(false);
-    }
-  };
-
-  const handleLogout = () => {
-    if (confirm('Apakah Anda yakin ingin keluar dari aplikasi?')) {
+  const handleLogout = async () => {
+    const confirm = await showAlert.confirm("Keluar Kasir?", "Sesi Anda akan berakhir.");
+    if (confirm) {
       logout();
       router.push('/login');
     }
@@ -70,24 +82,27 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
   return (
     <>
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
       >
         <div className="h-full flex flex-col">
-          <div className="h-16 flex items-center px-6 border-b border-gray-100">
-            <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center mr-3">
-              <Package className="text-white" size={20} />
+          {/* Brand Header - Identik dengan Header Kasir */}
+          <div className="h-16 lg:h-20 flex items-center px-6 border-b border-gray-100 flex-shrink-0">
+            <div className="w-8 h-8 lg:w-10 lg:h-10 bg-orange-500 rounded-lg lg:rounded-xl flex items-center justify-center text-white shadow-orange-200 shadow-lg flex-shrink-0 mr-3">
+              <Utensils size={20} strokeWidth={2.5} />
             </div>
-            <h1 className="text-xl font-bold text-gray-800 tracking-tight">POS System</h1>
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold leading-none tracking-tight text-gray-800 truncate">Savoria POS</h1>
+              <p className="text-[10px] text-gray-400 font-medium mt-1 uppercase tracking-wider truncate">Enterprise Suite</p>
+            </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
-            <div onClick={handleLinkClick}>
-              <SidebarItem icon={LayoutDashboard} label="Dashboard" href="/" />
-            </div>
+          {/* Navigation Links */}
+          <div className="flex-1 overflow-y-auto py-6 px-4 space-y-1 no-scrollbar">
+            <SidebarItem icon={LayoutDashboard} label="Dashboard" href="/" />
 
             <div className="pt-4 pb-2">
-              <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Inventory</p>
+              <p className="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 italic">Management</p>
               <SidebarItem
                 icon={Box}
                 label="Produk & Stok"
@@ -96,51 +111,50 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
                 onClick={() => toggleSubmenu('inventory')}
               />
               {expandedMenu.inventory && (
-                <div className="ml-4 pl-4 border-l border-gray-200 space-y-1 mt-1 mb-2" onClick={handleLinkClick}>
-                  <Link href="/products" className={`block w-full text-left px-4 py-2 text-sm rounded-lg transition-colors ${pathname === '/products' ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-gray-800'}`}>Daftar Produk</Link>
-                  <Link href="/categories" className={`block w-full text-left px-4 py-2 text-sm rounded-lg transition-colors ${pathname === '/categories' ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-gray-800'}`}>Kategori</Link>
-                  <Link href="/stock" className={`block w-full text-left px-4 py-2 text-sm rounded-lg transition-colors ${pathname === '/inventory' ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-gray-800'}`}>Riwayat Stok</Link>
+                <div className="ml-4 pl-4 border-l border-gray-100 space-y-1 mt-1 mb-2">
+                  <Link href="/products" className={`block w-full text-left px-4 py-2 text-sm rounded-lg transition-colors ${pathname === '/products' ? 'text-orange-600 bg-orange-50 font-bold' : 'text-gray-500 hover:text-gray-800'}`}>Daftar Produk</Link>
+                  <Link href="/categories" className={`block w-full text-left px-4 py-2 text-sm rounded-lg transition-colors ${pathname === '/categories' ? 'text-orange-600 bg-orange-50 font-bold' : 'text-gray-500 hover:text-gray-800'}`}>Kategori</Link>
+                  <Link href="/inventory" className={`block w-full text-left px-4 py-2 text-sm rounded-lg transition-colors ${pathname === '/inventory' ? 'text-orange-600 bg-orange-50 font-bold' : 'text-gray-500 hover:text-gray-800'}`}>Riwayat Stok</Link>
                 </div>
               )}
             </div>
 
-            <div onClick={handleLinkClick}>
-              <SidebarItem icon={ShoppingCart} label="Transaksi" href="/transactions" />
-              <SidebarItem icon={ClipboardList} label="Laporan" href="/reports" />
-            </div>
+            <SidebarItem icon={ShoppingCart} label="Transaksi" href="/transactions" />
+            <SidebarItem icon={ClipboardList} label="Laporan" href="/reports" />
 
             <div className="pt-4 pb-2">
-              <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">People</p>
-              <div onClick={handleLinkClick}>
-                <SidebarItem icon={Users} label="Staff" href="/users" />
-                <SidebarItem icon={UserCircle} label="Pelanggan" href="/customers" />
-              </div>
+              <p className="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 italic">People</p>
+              <SidebarItem icon={Users} label="Pegawai" href="/users" />
+              <SidebarItem icon={UserCircle} label="Pelanggan" href="/customers" />
             </div>
 
-            <div className="pt-4" onClick={handleLinkClick}>
-              <SidebarItem icon={Settings} label="Pengaturan" href="/settings" />
-            </div>
+            <SidebarItem icon={Settings} label="Pengaturan" href="/settings" />
           </div>
 
-          <div className="p-4 border-t border-gray-100">
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
-              <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold overflow-hidden">
-                {user?.imageUrl ? (
+          {/* User Profile Area - Persis seperti Header (Clean & Mewah) */}
+          <div className="p-4 border-t border-gray-100 bg-white">
+            <div className="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-white hover:shadow-md transition-all duration-300">
+              <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center text-white font-bold overflow-hidden shadow-sm flex-shrink-0 ring-4 ring-white">
+                {mounted && user?.imageUrl ? (
                   <img src={getImageUrl(user.imageUrl)} alt={user.name} className="w-full h-full object-cover" />
                 ) : (
-                  <span>{user?.name?.charAt(0).toUpperCase() || 'U'}</span>
+                  <span className="text-sm font-black">{mounted && user?.name ? user.name.charAt(0).toUpperCase() : 'A'}</span>
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{user?.name || 'Guest'}</p>
-                <p className="text-xs text-gray-500 truncate">{user?.role || 'Staff'}</p>
+                <p className="text-sm font-bold text-gray-800 truncate leading-none">
+                  {mounted ? (user?.name || 'Authorized') : 'Loading...'}
+                </p>
+                <p className="text-[10px] text-gray-500 truncate font-medium mt-1.5 uppercase tracking-tighter">
+                  {mounted ? (user?.role || 'Staff Member') : 'Verifying...'}
+                </p>
               </div>
               <button
                 onClick={handleLogout}
-                className="text-gray-400 hover:text-red-500 transition-colors"
+                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                 title="Keluar"
               >
-                <LogOut size={18} />
+                <LogOut size={18} strokeWidth={2.5} />
               </button>
             </div>
           </div>
@@ -148,10 +162,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
       </aside>
 
       {isMobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 z-40 lg:hidden"
-          onClick={() => setIsMobileOpen(false)}
-        ></div>
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsMobileOpen(false)}></div>
       )}
     </>
   );
