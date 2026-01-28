@@ -73,7 +73,7 @@ const ProductCard = ({ product, addToCart, getImageUrl }) => {
 
 export default function ProductGrid({ products, addToCart, getImageUrl }) {
     if (products.length === 0) {
-        return (
+        return   (
             <div className="h-full flex flex-col items-center justify-center text-gray-400">
                 <Package size={48} className="mb-2 opacity-50" />
                 <p>Tidak ada produk ditemukan</p>

@@ -197,7 +197,7 @@ export default function TransactionDetailModal({ isOpen, onClose, transaction })
                             <span>SUBTOTAL</span>
                             <span>{transaction.subTotal.toLocaleString('id-ID')}</span>
                         </div>
-
+                        
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginTop: '5px', borderTop: '1px solid #000', paddingTop: '5px' }}>
                             <span>TOTAL</span>
                             <span>{transaction.grandTotal.toLocaleString('id-ID')}</span>

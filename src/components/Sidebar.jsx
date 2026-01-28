@@ -24,8 +24,8 @@ const SidebarItem = ({ icon: Icon, label, href, hasSubmenu, isOpen, onClick }) =
   );
 
   const className = `w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group mb-1 ${isActive || (hasSubmenu && isOpen)
-      ? 'bg-orange-50 text-orange-600 font-bold'
-      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 font-medium'
+    ? 'bg-orange-50 text-orange-600 font-bold'
+    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 font-medium'
     }`;
 
   if (href) {
@@ -114,7 +114,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
                 <div className="ml-4 pl-4 border-l border-gray-100 space-y-1 mt-1 mb-2">
                   <Link href="/products" className={`block w-full text-left px-4 py-2 text-sm rounded-lg transition-colors ${pathname === '/products' ? 'text-orange-600 bg-orange-50 font-bold' : 'text-gray-500 hover:text-gray-800'}`}>Daftar Produk</Link>
                   <Link href="/categories" className={`block w-full text-left px-4 py-2 text-sm rounded-lg transition-colors ${pathname === '/categories' ? 'text-orange-600 bg-orange-50 font-bold' : 'text-gray-500 hover:text-gray-800'}`}>Kategori</Link>
-                  <Link href="/inventory" className={`block w-full text-left px-4 py-2 text-sm rounded-lg transition-colors ${pathname === '/inventory' ? 'text-orange-600 bg-orange-50 font-bold' : 'text-gray-500 hover:text-gray-800'}`}>Riwayat Stok</Link>
+                  <Link href="/inventory" className={`block w-full text-left px-4 py-2 text-sm rounded-lg transition-colors ${pathname === '/stock' ? 'text-orange-600 bg-orange-50 font-bold' : 'text-gray-500 hover:text-gray-800'}`}>Riwayat Stok</Link>
                 </div>
               )}
             </div>

@@ -295,3 +295,4 @@ export default function ProductModal({ isOpen, onClose, onSave, initialData, cat
     </div>
   );
 }
+

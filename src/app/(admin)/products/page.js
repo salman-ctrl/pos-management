@@ -24,17 +24,13 @@ export default function ProductsPage() {
         fetchDataMaster();
     }, []);
 
-    // --- SOLUSI GAMBAR: Menangani link Cloudinary (//) dan link HTTP/HTTPS ---
     const getImageUrl = (path) => {
         if (!path) return null;
 
-        // Cloudinary sering mengirim URL diawali // atau http
         if (path.startsWith('http') || path.startsWith('//')) {
-            // Jika diawali //, kita beri https: agar menjadi link utuh yang valid
             return path.startsWith('//') ? `https:${path}` : path;
         }
 
-        // Jika path lokal lama (fallback untuk data lama di localhost)
         return `${API_URL}${path}`;
     };
 
