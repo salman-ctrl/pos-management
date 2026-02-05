@@ -16,7 +16,9 @@ function OTPForm() {
     const [otpCode, setOtpCode] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isResending, setIsResending] = useState(false);
-    const [timeLeft, setTimeLeft] = useState(10);
+
+    // --- PERUBAHAN: 10 detik menjadi 120 detik (2 menit) ---
+    const [timeLeft, setTimeLeft] = useState(120);
     const [canResend, setCanResend] = useState(false);
 
     useEffect(() => {
@@ -83,7 +85,8 @@ function OTPForm() {
             if (data.success) {
                 showAlert.success("Terkirim", "Kode OTP baru telah dikirim.");
                 setOtpCode('');
-                setTimeLeft(10);
+                // --- PERUBAHAN: Reset kembali ke 120 detik ---
+                setTimeLeft(120);
                 setCanResend(false);
             } else {
                 showAlert.error("Gagal", data.message);
@@ -94,6 +97,10 @@ function OTPForm() {
             setIsResending(false);
         }
     };
+
+    // Helper sederhana untuk format MM:SS
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
 
     return (
         <div className="animate-in fade-in slide-in-from-right-8 duration-500">
@@ -127,7 +134,8 @@ function OTPForm() {
                     <div className="flex justify-center items-center gap-2">
                         <Timer size={14} className={timeLeft > 0 ? "text-orange-500 animate-pulse" : "text-gray-300"} />
                         <span className={`text-xs font-bold font-mono ${timeLeft > 0 ? "text-orange-600" : "text-gray-400"}`}>
-                            00:{timeLeft < 10 ? `0${timeLeft}` : timeLeft}
+                            {/* --- PERUBAHAN: Menampilkan format 02:00 --- */}
+                            {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
                         </span>
                     </div>
                 </div>
