@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard, ShoppingCart, Users, Settings,
@@ -24,8 +22,8 @@ const SidebarItem = ({ icon: Icon, label, href, hasSubmenu, isOpen, onClick }) =
   );
 
   const className = `w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group mb-1 ${isActive || (hasSubmenu && isOpen)
-    ? 'bg-orange-50 text-orange-600 font-bold'
-    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 font-medium'
+      ? 'bg-orange-50 text-orange-600 font-bold'
+      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 font-medium'
     }`;
 
   if (href) {
@@ -50,14 +48,12 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Menggunakan selector reaktif dari Zustand Store
   const user = useStore((state) => state.user);
   const logout = useStore((state) => state.logout);
 
   const [mounted, setMounted] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState({ inventory: true });
 
-  // Pastikan komponen sudah terpasang (mounted) untuk menghindari error hydration
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -86,7 +82,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
           }`}
       >
         <div className="h-full flex flex-col">
-          {/* Brand Header - Identik dengan Header Kasir */}
+          {/* Brand Header */}
           <div className="h-16 lg:h-20 flex items-center px-6 border-b border-gray-100 flex-shrink-0">
             <div className="w-8 h-8 lg:w-10 lg:h-10 bg-orange-500 rounded-lg lg:rounded-xl flex items-center justify-center text-white shadow-orange-200 shadow-lg flex-shrink-0 mr-3">
               <Utensils size={20} strokeWidth={2.5} />
@@ -112,9 +108,12 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
               />
               {expandedMenu.inventory && (
                 <div className="ml-4 pl-4 border-l border-gray-100 space-y-1 mt-1 mb-2">
-                  <Link href="/products" className={`block w-full text-left px-4 py-2 text-sm rounded-lg transition-colors ${pathname === '/products' ? 'text-orange-600 bg-orange-50 font-bold' : 'text-gray-500 hover:text-gray-800'}`}>Daftar Produk</Link>
-                  <Link href="/categories" className={`block w-full text-left px-4 py-2 text-sm rounded-lg transition-colors ${pathname === '/categories' ? 'text-orange-600 bg-orange-50 font-bold' : 'text-gray-500 hover:text-gray-800'}`}>Kategori</Link>
-                  <Link href="/inventory" className={`block w-full text-left px-4 py-2 text-sm rounded-lg transition-colors ${pathname === '/stock' ? 'text-orange-600 bg-orange-50 font-bold' : 'text-gray-500 hover:text-gray-800'}`}>Riwayat Stok</Link>
+                  <div className="space-y-1">
+                    <Link href="/products" className={`block w-full text-left px-4 py-2 text-sm rounded-lg transition-colors ${pathname === '/products' ? 'text-orange-600 bg-orange-50 font-bold' : 'text-gray-500 hover:text-gray-800'}`}>Daftar Produk</Link>
+                    <Link href="/categories" className={`block w-full text-left px-4 py-2 text-sm rounded-lg transition-colors ${pathname === '/categories' ? 'text-orange-600 bg-orange-50 font-bold' : 'text-gray-500 hover:text-gray-800'}`}>Kategori</Link>
+                    {/* FIX: Mengubah href dari /inventory ke /stock agar sinkron dengan routing app */}
+                    <Link href="/stock" className={`block w-full text-left px-4 py-2 text-sm rounded-lg transition-colors ${pathname === '/stock' ? 'text-orange-600 bg-orange-50 font-bold' : 'text-gray-500 hover:text-gray-800'}`}>Riwayat Stok</Link>
+                  </div>
                 </div>
               )}
             </div>
@@ -131,9 +130,9 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
             <SidebarItem icon={Settings} label="Pengaturan" href="/settings" />
           </div>
 
-          {/* User Profile Area - Persis seperti Header (Clean & Mewah) */}
+          {/* User Profile Area */}
           <div className="p-4 border-t border-gray-100 bg-white">
-            <div className="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-white hover:shadow-md transition-all duration-300">
+            <div className="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-white hover:shadow-md transition-all duration-300 group cursor-pointer">
               <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center text-white font-bold overflow-hidden shadow-sm flex-shrink-0 ring-4 ring-white">
                 {mounted && user?.imageUrl ? (
                   <img src={getImageUrl(user.imageUrl)} alt={user.name} className="w-full h-full object-cover" />
