@@ -19,13 +19,13 @@ export default function AuthGuard({ children }) {
     }
 
     const user = JSON.parse(userStr);
-    const role = user.role; 
+    const role = user.role;
 
-        if (role === 'CASHIER') {
-        if (!pathname.startsWith('/pos')) {
-            router.replace('/pos');
-            return;
-        }
+    if (role === 'CASHIER') {
+      if (!pathname.startsWith('/pos')) {
+        router.replace('/pos');
+        return;
+      }
     }
 
     if (role === 'ADMIN') {
@@ -37,7 +37,6 @@ export default function AuthGuard({ children }) {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-gray-50 text-gray-500 gap-3">
         <Loader2 className="animate-spin text-orange-500" size={48} />
-        <p className="text-sm font-medium">Memeriksa akses...</p>
       </div>
     );
   }
