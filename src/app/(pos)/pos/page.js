@@ -103,17 +103,24 @@ export default function POSPage() {
             setIsPrinting(true);
 
             const timer = setTimeout(() => {
-                console.log('🖨️ Memulai Print...');
-                window.print();
+                const receiptElement = document.getElementById('receipt-print');
+                if (receiptElement) {
+                    console.log('🖨️ Memulai Print...');
+                    console.log('🖨️ Receipt Element HTML:', receiptElement.innerHTML.substring(0, 200));
+                    window.print();
 
-                setTimeout(() => {
+                    setTimeout(() => {
+                        setIsPrinting(false);
+                    }, 1000);
+                } else {
+                    console.error('❌ Receipt element not found!');
                     setIsPrinting(false);
-                }, 1000);
-            }, 1500);
+                }
+            }, 2000);
 
             return () => clearTimeout(timer);
         }
-    }, [lastTrxData, paymentStep]);
+    }, [lastTrxData, paymentStep, isPrinting]);
 
     const filteredProducts = useMemo(() => {
         return products.filter(p => {
@@ -272,6 +279,8 @@ export default function POSPage() {
         opacity: 0;
         pointer-events: none;
         z-index: -1;
+        left: -9999px;
+        top: 0;
     }
     
     @media print {
@@ -282,16 +291,21 @@ export default function POSPage() {
         
         body * {
             visibility: hidden !important;
+            display: none !important;
+        }
+        
+        #receipt-print,
+        #receipt-print * {
+            visibility: visible !important;
+            display: block !important;
         }
         
         #receipt-print {
-            visibility: visible !important;
             position: absolute !important;
             left: 0 !important;
             top: 0 !important;
             opacity: 1 !important;
             z-index: 9999 !important;
-            display: block !important;
             width: 58mm !important;
             padding: 4mm !important;
             background: white !important;
@@ -299,10 +313,6 @@ export default function POSPage() {
             font-family: 'Courier New', Courier, monospace !important;
             font-size: 10px !important;
             line-height: 1.4 !important;
-        }
-        
-        #receipt-print * {
-            visibility: visible !important;
         }
         
         @page {
@@ -390,8 +400,8 @@ export default function POSPage() {
                 currentInvoiceNumber={lastTrxData?.transaction?.invoiceNumber}
             />
 
-            {lastTrxData && (
-                <div id="receipt-print">
+            {lastTrxData && paymentStep === 'SUCCESS' && (
+                <div id="receipt-print" style={{ display: 'block' }}>
                     <div style={{ textAlign: 'center', marginBottom: '10px' }}>
                         {lastTrxData.store?.logoUrl && (
                             <img src={lastTrxData.store.logoUrl} alt="Logo" style={{ maxWidth: '35mm', marginBottom: '8px', display: 'block', marginLeft: 'auto', marginRight: 'auto' }} />
