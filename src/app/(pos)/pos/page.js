@@ -105,23 +105,35 @@ export default function POSPage() {
             printTriggeredRef.current = true;
             setIsPrinting(true);
 
-            const timer = setTimeout(() => {
-                const receiptElement = document.getElementById('receipt-print');
-                if (receiptElement) {
-                    console.log('🖨️ Memulai Print...');
-                    console.log('🖨️ Receipt Element HTML:', receiptElement.innerHTML.substring(0, 200));
-                    window.print();
-
+            // CRITICAL FIX: Tunggu React selesai render dengan requestAnimationFrame
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
                     setTimeout(() => {
-                        setIsPrinting(false);
-                    }, 1000);
-                } else {
-                    console.error('❌ Receipt element not found!');
-                    setIsPrinting(false);
-                }
-            }, 2000);
+                        const receiptElement = document.getElementById('receipt-print');
+                        if (receiptElement) {
+                            const htmlContent = receiptElement.innerHTML;
+                            console.log('🖨️ Memulai Print...');
+                            console.log('📏 Receipt HTML Length:', htmlContent.length);
+                            console.log('🖨️ Receipt First 500 chars:', htmlContent.substring(0, 500));
 
-            return () => clearTimeout(timer);
+                            // Verifikasi HTML sudah lengkap (minimal 1000 karakter)
+                            if (htmlContent.length > 1000) {
+                                window.print();
+                            } else {
+                                console.error('⚠️ HTML belum lengkap, retry...');
+                                setTimeout(() => window.print(), 1000);
+                            }
+
+                            setTimeout(() => {
+                                setIsPrinting(false);
+                            }, 1500);
+                        } else {
+                            console.error('❌ Receipt element not found!');
+                            setIsPrinting(false);
+                        }
+                    }, 1000);
+                });
+            });
         }
     }, [lastTrxData, paymentStep]);
 
