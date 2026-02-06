@@ -267,33 +267,50 @@ export default function POSPage() {
     return (
         <div className="flex flex-col lg:flex-row h-screen bg-gray-50 overflow-hidden font-sans text-gray-800">
             <style>{`
-                #receipt-print {
-                    position: absolute;
-                    left: -9999px;
-                    top: 0;
-                    pointer-events: none;
-                }
-                
-                @media print {
-                    body * { visibility: hidden; }
-                    #receipt-print, #receipt-print * { visibility: visible !important; }
-                    #receipt-print {
-                        display: block !important;
-                        position: fixed !important;
-                        left: 0 !important;
-                        top: 0 !important;
-                        opacity: 1 !important;
-                        width: 58mm;
-                        padding: 4mm;
-                        background: white;
-                        color: black;
-                        font-family: 'Courier New', Courier, monospace;
-                        font-size: 10px;
-                        line-height: 1.4;
-                    }
-                    @page { margin: 0; size: auto; }
-                }
-            `}</style>
+    #receipt-print {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+        z-index: -1;
+    }
+    
+    @media print {
+        html, body {
+            height: auto;
+            overflow: visible;
+        }
+        
+        body * {
+            visibility: hidden !important;
+        }
+        
+        #receipt-print {
+            visibility: visible !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            opacity: 1 !important;
+            z-index: 9999 !important;
+            display: block !important;
+            width: 58mm !important;
+            padding: 4mm !important;
+            background: white !important;
+            color: black !important;
+            font-family: 'Courier New', Courier, monospace !important;
+            font-size: 10px !important;
+            line-height: 1.4 !important;
+        }
+        
+        #receipt-print * {
+            visibility: visible !important;
+        }
+        
+        @page {
+            size: 58mm auto;
+            margin: 0;
+        }
+    }
+`}</style>
 
             <div className={`flex-1 flex flex-col min-w-0 relative ${mobileView !== 'menu' ? 'hidden lg:flex' : 'flex'}`}>
                 <Header
