@@ -41,7 +41,6 @@ export default function POSPage() {
     const [isProcessing, setIsProcessing] = useState(false);
 
     const [lastTrxData, setLastTrxData] = useState(null);
-    const [readyToPrint, setReadyToPrint] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -90,7 +89,6 @@ export default function POSPage() {
         }
     }, []);
 
-    // ✅ USEEFFECT BARU - Trigger print setelah lastTrxData ter-set dan SUCCESS
     useEffect(() => {
         console.log('🖨️ Print Check:', {
             hasData: !!lastTrxData,
@@ -104,20 +102,18 @@ export default function POSPage() {
 
             setIsPrinting(true);
 
-            // Beri waktu cukup untuk render DOM
             const timer = setTimeout(() => {
                 console.log('🖨️ Memulai Print...');
                 window.print();
 
-                // Reset setelah print
                 setTimeout(() => {
                     setIsPrinting(false);
                 }, 1000);
-            }, 1500); // Delay 1.5 detik untuk memastikan render selesai
+            }, 1500);
 
             return () => clearTimeout(timer);
         }
-    }, [lastTrxData, paymentStep]); // Trigger saat data atau step berubah
+    }, [lastTrxData, paymentStep]);
 
     const filteredProducts = useMemo(() => {
         return products.filter(p => {
@@ -209,7 +205,6 @@ export default function POSPage() {
 
             console.log('✅ Response dari Backend:', resJson.data);
 
-            // Set data transaksi
             setLastTrxData(resJson.data);
 
             if (type === 'QRIS' && resJson.data.midtransToken) {
@@ -218,13 +213,11 @@ export default function POSPage() {
                         console.log('💳 QRIS Payment Success');
                         setPaymentStep('SUCCESS');
                         showAlert.success("Pembayaran Sukses", "Transaksi QRIS berhasil!");
-                        // Print akan di-handle oleh useEffect
                     },
                     onPending: function (result) {
                         console.log('⏳ QRIS Payment Pending');
                         setPaymentStep('SUCCESS');
                         showAlert.info("Menunggu", "Pembayaran sedang diproses.");
-                        // Print akan di-handle oleh useEffect
                     },
                     onError: function (result) {
                         showAlert.error("Gagal", "Pembayaran gagal.");
@@ -234,11 +227,9 @@ export default function POSPage() {
                     }
                 });
             } else {
-                // CASH Payment
                 console.log('💵 Cash Payment Success');
                 setPaymentStep('SUCCESS');
                 showAlert.success("Pembayaran Sukses", "Transaksi tunai berhasil disimpan.");
-                // Print akan di-handle oleh useEffect
             }
 
         } catch (error) {
@@ -276,14 +267,22 @@ export default function POSPage() {
     return (
         <div className="flex flex-col lg:flex-row h-screen bg-gray-50 overflow-hidden font-sans text-gray-800">
             <style>{`
+                #receipt-print {
+                    position: absolute;
+                    left: -9999px;
+                    top: 0;
+                    pointer-events: none;
+                }
+                
                 @media print {
                     body * { visibility: hidden; }
                     #receipt-print, #receipt-print * { visibility: visible !important; }
                     #receipt-print {
                         display: block !important;
-                        position: fixed;
-                        left: 0;
-                        top: 0;
+                        position: fixed !important;
+                        left: 0 !important;
+                        top: 0 !important;
+                        opacity: 1 !important;
                         width: 58mm;
                         padding: 4mm;
                         background: white;
@@ -374,9 +373,8 @@ export default function POSPage() {
                 currentInvoiceNumber={lastTrxData?.transaction?.invoiceNumber}
             />
 
-            {/* ✅ RECEIPT PRINT TEMPLATE - Pastikan lastTrxData ada */}
             {lastTrxData && (
-                <div id="receipt-print" style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}>
+                <div id="receipt-print">
                     <div style={{ textAlign: 'center', marginBottom: '10px' }}>
                         {lastTrxData.store?.logoUrl && (
                             <img src={lastTrxData.store.logoUrl} alt="Logo" style={{ maxWidth: '35mm', marginBottom: '8px', display: 'block', marginLeft: 'auto', marginRight: 'auto' }} />
