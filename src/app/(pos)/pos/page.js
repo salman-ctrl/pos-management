@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 import Header from '@/components/pos/Header';
@@ -41,6 +41,7 @@ export default function POSPage() {
     const [isProcessing, setIsProcessing] = useState(false);
 
     const [lastTrxData, setLastTrxData] = useState(null);
+    const printTriggeredRef = useRef(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -94,12 +95,14 @@ export default function POSPage() {
             hasData: !!lastTrxData,
             step: paymentStep,
             shouldPrint: lastTrxData?.store?.autoPrintReceipt,
-            isPrinting
+            isPrinting,
+            printTriggered: printTriggeredRef.current
         });
 
-        if (lastTrxData && paymentStep === 'SUCCESS' && lastTrxData.store?.autoPrintReceipt && !isPrinting) {
+        if (lastTrxData && paymentStep === 'SUCCESS' && lastTrxData.store?.autoPrintReceipt && !printTriggeredRef.current) {
             console.log('📄 Data Transaksi untuk Print:', lastTrxData);
 
+            printTriggeredRef.current = true;
             setIsPrinting(true);
 
             const timer = setTimeout(() => {
@@ -120,7 +123,7 @@ export default function POSPage() {
 
             return () => clearTimeout(timer);
         }
-    }, [lastTrxData, paymentStep, isPrinting]);
+    }, [lastTrxData, paymentStep]);
 
     const filteredProducts = useMemo(() => {
         return products.filter(p => {
@@ -262,6 +265,7 @@ export default function POSPage() {
         setLastTrxData(null);
         setPaymentStep('SELECT');
         setIsPrinting(false);
+        printTriggeredRef.current = false;
         window.location.reload();
     }
 
