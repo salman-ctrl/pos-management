@@ -18,316 +18,405 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 const MIDTRANS_CLIENT_KEY = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY;
 
 export default function POSPage() {
-  const router = useRouter(); 
-  
-  // --- STATE DATA ---
-  const [products, setProducts] = useState([]);
-  const [members, setMembers] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [currentUser, setCurrentUser] = useState(null); 
-  
-  // --- STATE UI ---
-  const [cart, setCart] = useState([]);
-  const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Semua');
-  const [mobileView, setMobileView] = useState('menu'); 
+    const router = useRouter();
 
-  // Member State
-  const [selectedMember, setSelectedMember] = useState(null);
-  const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
-  const [memberSearch, setMemberSearch] = useState('');
+    // --- STATE DATA ---
+    const [products, setProducts] = useState([]);
+    const [members, setMembers] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [currentUser, setCurrentUser] = useState(null);
+    const [storeSettings, setStoreSettings] = useState(null);
 
-  // Payment States
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [paymentStep, setPaymentStep] = useState('SELECT'); 
-  const [paymentMethod, setPaymentMethod] = useState(''); 
-  const [cashGiven, setCashGiven] = useState(0);
-  const [isPrinting, setIsPrinting] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
+    // --- STATE UI ---
+    const [cart, setCart] = useState([]);
+    const [search, setSearch] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('Semua');
+    const [mobileView, setMobileView] = useState('menu');
 
-  // --- 1. FETCH DATA ---
-  useEffect(() => {
-    const fetchData = async () => {
-        try {
-            const token = localStorage.getItem('token'); 
-            const userStr = localStorage.getItem('user');
+    // Member State
+    const [selectedMember, setSelectedMember] = useState(null);
+    const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
+    const [memberSearch, setMemberSearch] = useState('');
 
-            if (userStr) {
-                setCurrentUser(JSON.parse(userStr));
+    // Payment States
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [paymentStep, setPaymentStep] = useState('SELECT');
+    const [paymentMethod, setPaymentMethod] = useState('');
+    const [cashGiven, setCashGiven] = useState(0);
+    const [isPrinting, setIsPrinting] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    // Data Struk Terakhir
+    const [lastTrxData, setLastTrxData] = useState(null);
+
+    // --- 1. FETCH DATA ---
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const userStr = localStorage.getItem('user');
+
+                if (userStr) {
+                    setCurrentUser(JSON.parse(userStr));
+                }
+
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+                const [prodRes, catRes, memRes, setRes] = await Promise.all([
+                    fetch(`${API_URL}/api/products`, { headers }),
+                    fetch(`${API_URL}/api/products/categories`, { headers }),
+                    fetch(`${API_URL}/api/customers`, { headers }),
+                    fetch(`${API_URL}/api/settings`, { headers })
+                ]);
+
+                const prodData = await prodRes.json();
+                const catData = await catRes.json();
+                const memData = await memRes.json();
+                const setData = await setRes.json();
+
+                if (prodData.success) setProducts(prodData.data);
+                if (catData.success) setCategories([{ id: 0, name: 'Semua' }, ...catData.data]);
+                if (memData.success) setMembers(memData.data);
+                if (setData.success) setStoreSettings(setData.data);
+
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                showAlert.error("Gagal Memuat Data", "Cek koneksi backend.");
             }
+        };
 
-            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        fetchData();
 
-            const [prodRes, catRes, memRes] = await Promise.all([
-                fetch(`${API_URL}/api/products`, { headers }),
-                fetch(`${API_URL}/api/products/categories`, { headers }),
-                fetch(`${API_URL}/api/customers`, { headers })
-            ]);
+        // Load Midtrans
+        const script = document.createElement('script');
+        script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
+        script.setAttribute('data-client-key', MIDTRANS_CLIENT_KEY);
+        document.body.appendChild(script);
 
-            const prodData = await prodRes.json();
-            const catData = await catRes.json();
-            const memData = await memRes.json();
+        return () => {
+            if (document.body.contains(script)) document.body.removeChild(script);
+        }
+    }, []);
 
-            if (prodData.success) setProducts(prodData.data);
-            if (catData.success) setCategories([{ id: 0, name: 'Semua' }, ...catData.data]);
-            if (memData.success) setMembers(memData.data);
+    // --- LOGIC FILTER ---
+    const filteredProducts = useMemo(() => {
+        return products.filter(p => {
+            const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+            const categoryName = p.category ? p.category.name : 'Uncategorized';
+            const matchCategory = selectedCategory === 'Semua' || categoryName === selectedCategory;
+            return matchSearch && matchCategory;
+        });
+    }, [search, selectedCategory, products]);
 
-        } catch (error) {
-            console.error("Error fetching data:", error);
-            showAlert.error("Gagal Memuat Data", "Cek koneksi backend.");
+    const filteredMembers = useMemo(() => {
+        if (!memberSearch) return members;
+        return members.filter(m =>
+            m.name.toLowerCase().includes(memberSearch.toLowerCase()) ||
+            (m.memberId && m.memberId.toLowerCase().includes(memberSearch.toLowerCase())) ||
+            (m.phone && m.phone.includes(memberSearch))
+        );
+    }, [memberSearch, members]);
+
+    // --- LOGIC CART ---
+    const addToCart = (product) => {
+        if (product.stock <= 0) return showAlert.warning("Stok Habis", "Produk ini tidak bisa dipilih.");
+
+        const existing = cart.find(item => item.id === product.id);
+        if (existing) {
+            if (existing.qty + 1 > product.stock) return showAlert.warning("Stok Terbatas", "Jumlah melebihi stok yang tersedia.");
+            setCart(cart.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item));
+        } else {
+            setCart([...cart, { ...product, qty: 1 }]);
         }
     };
 
-    fetchData();
-
-    // Load Midtrans
-    const script = document.createElement('script');
-    script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
-    script.setAttribute('data-client-key', MIDTRANS_CLIENT_KEY); 
-    document.body.appendChild(script);
-
-    return () => {
-        if(document.body.contains(script)) document.body.removeChild(script);
-    }
-  }, []);
-
-  // --- LOGIC FILTER ---
-  const filteredProducts = useMemo(() => {
-    return products.filter(p => {
-      const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
-      const categoryName = p.category ? p.category.name : 'Uncategorized';
-      const matchCategory = selectedCategory === 'Semua' || categoryName === selectedCategory;
-      return matchSearch && matchCategory;
-    });
-  }, [search, selectedCategory, products]);
-
-  const filteredMembers = useMemo(() => {
-      if(!memberSearch) return members;
-      return members.filter(m => 
-        m.name.toLowerCase().includes(memberSearch.toLowerCase()) || 
-        (m.memberId && m.memberId.toLowerCase().includes(memberSearch.toLowerCase())) ||
-        (m.phone && m.phone.includes(memberSearch))
-      );
-  }, [memberSearch, members]);
-
-  // --- LOGIC CART ---
-  const addToCart = (product) => {
-    if (product.stock <= 0) return showAlert.warning("Stok Habis", "Produk ini tidak bisa dipilih.");
-    
-    const existing = cart.find(item => item.id === product.id);
-    if (existing) {
-        if (existing.qty + 1 > product.stock) return showAlert.warning("Stok Terbatas", "Jumlah melebihi stok yang tersedia.");
-        setCart(cart.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item));
-    } else {
-        setCart([...cart, { ...product, qty: 1 }]);
-    }
-  };
-
-  const updateQty = (id, delta) => {
-    setCart(cart.map(item => {
-      if (item.id === id) {
-        const product = products.find(p => p.id === id);
-        if (delta > 0 && item.qty + 1 > product.stock) {
-            showAlert.warning("Batas Stok", "Stok produk tidak mencukupi.");
-            return item;
-        }
-        const newQty = Math.max(0, item.qty + delta);
-        return { ...item, qty: newQty };
-      }
-      return item;
-    }).filter(item => item.qty > 0));
-  };
-
-  const removeFromCart = (id) => setCart(cart.filter(item => item.id !== id));
-
-  // --- CALCULATIONS ---
-  const subTotal = cart.reduce((sum, item) => sum + (Number(item.price) * item.qty), 0);
-  const taxRate = 0.11; 
-  const taxAmount = subTotal * taxRate;
-  const grandTotal = subTotal + taxAmount;
-  
-  const deficit = Math.max(0, grandTotal - cashGiven);
-  const change = Math.max(0, cashGiven - grandTotal);
-  const isCashSufficient = cashGiven >= grandTotal;
-
-  // --- HELPERS ---
-  const formatNumber = (num) => num.toLocaleString('id-ID');
-  const handleCashInput = (e) => setCashGiven(Number(e.target.value.replace(/\D/g, '')));
-  const getImageUrl = (path) => !path ? null : (path.startsWith('http') ? path : `${API_URL}${path}`);
-
-  // --- LOGOUT HANDLER (Sudah dipindah ke Header.jsx, tapi logic bisa disini jika butuh state) ---
-  // Kita gunakan logic logout internal Header.jsx saja biar bersih.
-
-  // --- TRANSAKSI ---
-  const handleProcessTransaction = async (type) => {
-      setIsProcessing(true);
-      try {
-          const token = localStorage.getItem('token');
-          const userId = currentUser ? currentUser.id : 1; 
-          
-          const payload = {
-              userId: userId, 
-              customerId: selectedMember ? selectedMember.id : null,
-              items: cart.map(c => ({ productId: c.id, qty: c.qty })),
-              payment: { type: type, amount: grandTotal }
-          };
-
-          const res = await fetch(`${API_URL}/api/transactions`, {
-              method: 'POST',
-              headers: { 
-                  'Content-Type': 'application/json',
-                  'Authorization': token ? `Bearer ${token}` : ''
-              },
-              body: JSON.stringify(payload)
-          });
-
-          const data = await res.json();
-
-          if (!data.success) throw new Error(data.message);
-
-          if (type === 'QRIS' && data.data.midtransToken) {
-              window.snap.pay(data.data.midtransToken, {
-                  onSuccess: function(result) {
-                      setPaymentStep('SUCCESS');
-                      handlePrintReceipt();
-                      showAlert.success("Pembayaran Sukses", "Transaksi QRIS berhasil!");
-                  },
-                  onPending: function(result) {
-                      setPaymentStep('SUCCESS'); 
-                      handlePrintReceipt();
-                      showAlert.info("Menunggu", "Pembayaran sedang diproses.");
-                  },
-                  onError: function(result) {
-                      showAlert.error("Gagal", "Pembayaran gagal.");
-                  },
-                  onClose: function() {
-                      showAlert.warning("Dibatalkan", "Anda menutup popup pembayaran.");
-                  }
-              });
-          } else {
-              setPaymentStep('SUCCESS');
-              handlePrintReceipt();
-              showAlert.success("Pembayaran Sukses", "Transaksi tunai berhasil disimpan.");
-          }
-
-      } catch (error) {
-          showAlert.error("Transaksi Gagal", error.message);
-      } finally {
-          setIsProcessing(false);
-      }
-  };
-
-  const handlePaymentOpen = () => {
-    setPaymentStep('SELECT');
-    setPaymentMethod('');
-    setCashGiven(0);
-    setIsPaymentModalOpen(true);
-  }
-
-  const handlePrintReceipt = () => {
-      setIsPrinting(true);
-      setTimeout(() => { setIsPrinting(false); }, 2000);
-  };
-
-  const resetTransaction = () => {
-      setIsPaymentModalOpen(false);
-      setCart([]);
-      setSelectedMember(null);
-      setMobileView('menu');
-      window.location.reload(); 
-  }
-
-  // Handle Member Select from Modal
-  const handleMemberSelect = (member) => {
-      setSelectedMember(member);
-      setIsMemberModalOpen(false);
-      setMemberSearch('');
-  }
-
-  return (
-    <div className="flex flex-col lg:flex-row h-screen bg-gray-50 overflow-hidden font-sans text-gray-800">
-      
-      {/* KIRI: HEADER + KATEGORI + PRODUK */}
-      <div className={`flex-1 flex flex-col min-w-0 relative ${mobileView !== 'menu' ? 'hidden lg:flex' : 'flex'}`}>
-        <Header 
-            search={search} 
-            setSearch={setSearch} 
-            currentUser={currentUser} 
-        />
-
-        <CategoryFilter 
-            categories={categories} 
-            selectedCategory={selectedCategory} 
-            setSelectedCategory={setSelectedCategory} 
-        />
-
-        <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4 lg:py-6 bg-gray-50/50 pb-32 lg:pb-6">
-            <ProductGrid 
-                products={filteredProducts} 
-                addToCart={addToCart} 
-                getImageUrl={getImageUrl} 
-            />
-        </div>
-      </div>
-
-      {/* KANAN: SIDEBAR KERANJANG */}
-      <CartSidebar 
-        cart={cart}
-        mobileView={mobileView}
-        setMobileView={setMobileView}
-        selectedMember={selectedMember}
-        setSelectedMember={setSelectedMember}
-        setIsMemberModalOpen={setIsMemberModalOpen}
-        removeFromCart={removeFromCart}
-        updateQty={updateQty}
-        handlePaymentOpen={handlePaymentOpen}
-        setCart={setCart}
-        getImageUrl={getImageUrl}
-        grandTotal={grandTotal}
-        subTotal={subTotal}
-        taxAmount={taxAmount}
-        // Logout sekarang dihandle Header, tapi jika butuh di mobile menu:
-        handleLogout={() => {
-            if(confirm('Keluar?')) {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                router.push('/login');
+    const updateQty = (id, delta) => {
+        setCart(cart.map(item => {
+            if (item.id === id) {
+                const product = products.find(p => p.id === id);
+                if (delta > 0 && item.qty + 1 > product.stock) {
+                    showAlert.warning("Batas Stok", "Stok produk tidak mencukupi.");
+                    return item;
+                }
+                const newQty = Math.max(0, item.qty + delta);
+                return { ...item, qty: newQty };
             }
-        }}
-      />
+            return item;
+        }).filter(item => item.qty > 0));
+    };
 
-      {/* --- MODALS --- */}
-      
-      <MemberModal 
-         isOpen={isMemberModalOpen}
-         onClose={() => setIsMemberModalOpen(false)}
-         memberSearch={memberSearch}
-         setMemberSearch={setMemberSearch}
-         filteredMembers={filteredMembers}
-         handleMemberSelect={handleMemberSelect}
-         getImageUrl={getImageUrl}
-      />
+    const removeFromCart = (id) => setCart(cart.filter(item => item.id !== id));
 
-      <PaymentModal 
-         isOpen={isPaymentModalOpen}
-         onClose={() => setIsPaymentModalOpen(false)}
-         paymentStep={paymentStep}
-         setPaymentStep={setPaymentStep}
-         paymentMethod={paymentMethod}
-         setPaymentMethod={setPaymentMethod}
-         cashGiven={cashGiven}
-         handleCashInput={handleCashInput}
-         isCashSufficient={isCashSufficient}
-         change={change}
-         deficit={deficit}
-         handleProcessTransaction={handleProcessTransaction}
-         resetTransaction={resetTransaction}
-         isProcessing={isProcessing}
-         isPrinting={isPrinting}
-         grandTotal={grandTotal}
-         formatNumber={formatNumber}
-      />
+    // --- CALCULATIONS (DYNAMIC FROM SETTINGS) ---
+    const subTotal = cart.reduce((sum, item) => sum + (Number(item.price) * item.qty), 0);
+    const taxRate = storeSettings?.taxRate ? Number(storeSettings.taxRate) / 100 : 0.14; // Default 14% sesuai setting Salman
+    const taxAmount = subTotal * taxRate;
+    const grandTotal = subTotal + taxAmount;
 
-    </div>
-  );
+    const deficit = Math.max(0, grandTotal - cashGiven);
+    const change = Math.max(0, cashGiven - grandTotal);
+    const isCashSufficient = cashGiven >= grandTotal;
+
+    // --- HELPERS ---
+    const formatNumber = (num) => num.toLocaleString('id-ID');
+    const handleCashInput = (e) => setCashGiven(Number(e.target.value.replace(/\D/g, '')));
+    const getImageUrl = (path) => !path ? null : (path.startsWith('http') ? path : `${API_URL}${path}`);
+
+    // --- PRINT LOGIC ---
+    const handlePrintReceipt = () => {
+        setIsPrinting(true);
+        // Kita berikan jeda sedikit agar DOM template struk siap
+        setTimeout(() => {
+            window.print();
+            setIsPrinting(false);
+        }, 800);
+    };
+
+    // --- TRANSAKSI ---
+    const handleProcessTransaction = async (type) => {
+        setIsProcessing(true);
+        try {
+            const token = localStorage.getItem('token');
+            const userId = currentUser ? currentUser.id : 1;
+
+            const payload = {
+                userId: userId,
+                customerId: selectedMember ? selectedMember.id : null,
+                items: cart.map(c => ({ productId: c.id, qty: c.qty })),
+                payment: { type: type, amount: grandTotal }
+            };
+
+            const res = await fetch(`${API_URL}/api/transactions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : ''
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const resJson = await res.json();
+            if (!resJson.success) throw new Error(resJson.message);
+
+            // Simpan data untuk struk (transaction + store data)
+            setLastTrxData(resJson.data);
+
+            if (type === 'QRIS' && resJson.data.midtransToken) {
+                window.snap.pay(resJson.data.midtransToken, {
+                    onSuccess: function (result) {
+                        setPaymentStep('SUCCESS');
+                        if (resJson.data.store?.autoPrintReceipt) handlePrintReceipt();
+                        showAlert.success("Pembayaran Sukses", "Transaksi QRIS berhasil!");
+                    },
+                    onPending: function (result) {
+                        setPaymentStep('SUCCESS');
+                        handlePrintReceipt();
+                        showAlert.info("Menunggu", "Pembayaran sedang diproses.");
+                    },
+                    onError: function (result) {
+                        showAlert.error("Gagal", "Pembayaran gagal.");
+                    },
+                    onClose: function () {
+                        showAlert.warning("Dibatalkan", "Anda menutup popup pembayaran.");
+                    }
+                });
+            } else {
+                // Transaksi CASH
+                setPaymentStep('SUCCESS');
+                if (resJson.data.store?.autoPrintReceipt) handlePrintReceipt();
+                showAlert.success("Pembayaran Sukses", "Transaksi berhasil disimpan.");
+            }
+
+        } catch (error) {
+            showAlert.error("Transaksi Gagal", error.message);
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handlePaymentOpen = () => {
+        setPaymentStep('SELECT');
+        setPaymentMethod('');
+        setCashGiven(0);
+        setIsPaymentModalOpen(true);
+    }
+
+    const resetTransaction = () => {
+        setIsPaymentModalOpen(false);
+        setCart([]);
+        setSelectedMember(null);
+        setMobileView('menu');
+        setLastTrxData(null);
+        // Refresh produk untuk update stok terbaru dari database
+        window.location.reload();
+    }
+
+    // Handle Member Select from Modal
+    const handleMemberSelect = (member) => {
+        setSelectedMember(member);
+        setIsMemberModalOpen(false);
+        setMemberSearch('');
+    }
+
+    return (
+        <div className="flex flex-col lg:flex-row h-screen bg-gray-50 overflow-hidden font-sans text-gray-800">
+
+            {/* CSS PRINT ENGINE */}
+            <style>{`
+        @media print {
+          /* Sembunyikan semua UI Dashboard */
+          body * { visibility: hidden; }
+          
+          /* Tampilkan area struk saja */
+          #receipt-print, #receipt-print * { visibility: visible; }
+          
+          #receipt-print {
+            display: block !important;
+            position: absolute;
+            left: 0; top: 0;
+            width: 58mm; /* Ukuran standard thermal printer mini */
+            padding: 2mm;
+            background: white;
+            color: black;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.2;
+          }
+          #receipt-print img { max-width: 40mm; display: block; margin: 0 auto 5px; }
+        }
+      `}</style>
+
+            {/* KIRI: HEADER + KATEGORI + PRODUK */}
+            <div className={`flex-1 flex flex-col min-w-0 relative ${mobileView !== 'menu' ? 'hidden lg:flex' : 'flex'}`}>
+                <Header
+                    search={search}
+                    setSearch={setSearch}
+                    currentUser={currentUser}
+                />
+
+                <CategoryFilter
+                    categories={categories}
+                    selectedCategory={selectedCategory}
+                    setSelectedCategory={setSelectedCategory}
+                />
+
+                <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4 lg:py-6 bg-gray-50/50 pb-32 lg:pb-6">
+                    <ProductGrid
+                        products={filteredProducts}
+                        addToCart={addToCart}
+                        getImageUrl={getImageUrl}
+                    />
+                </div>
+            </div>
+
+            {/* KANAN: SIDEBAR KERANJANG */}
+            <CartSidebar
+                cart={cart}
+                mobileView={mobileView}
+                setMobileView={setMobileView}
+                selectedMember={selectedMember}
+                setSelectedMember={setSelectedMember}
+                setIsMemberModalOpen={setIsMemberModalOpen}
+                removeFromCart={removeFromCart}
+                updateQty={updateQty}
+                handlePaymentOpen={handlePaymentOpen}
+                setCart={setCart}
+                getImageUrl={getImageUrl}
+                grandTotal={grandTotal}
+                subTotal={subTotal}
+                taxAmount={taxAmount}
+                taxRate={taxRate * 100}
+                handleLogout={() => {
+                    if (confirm('Keluar?')) {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        router.push('/login');
+                    }
+                }}
+            />
+
+            {/* --- MODALS --- */}
+            <MemberModal
+                isOpen={isMemberModalOpen}
+                onClose={() => setIsMemberModalOpen(false)}
+                memberSearch={memberSearch}
+                setMemberSearch={setMemberSearch}
+                filteredMembers={filteredMembers}
+                handleMemberSelect={handleMemberSelect}
+                getImageUrl={getImageUrl}
+            />
+
+            <PaymentModal
+                isOpen={isPaymentModalOpen}
+                onClose={() => setIsPaymentModalOpen(false)}
+                paymentStep={paymentStep}
+                setPaymentStep={setPaymentStep}
+                paymentMethod={paymentMethod}
+                setPaymentMethod={setPaymentMethod}
+                cashGiven={cashGiven}
+                handleCashInput={handleCashInput}
+                isCashSufficient={isCashSufficient}
+                change={change}
+                deficit={deficit}
+                handleProcessTransaction={handleProcessTransaction}
+                resetTransaction={resetTransaction}
+                isProcessing={isProcessing}
+                isPrinting={isPrinting}
+                grandTotal={grandTotal}
+                formatNumber={formatNumber}
+            />
+
+            {/* --- HIDDEN RECEIPT TEMPLATE (STRUK FISIK) --- */}
+            {lastTrxData && (
+                <div id="receipt-print" className="hidden">
+                    <div style={{ textAlign: 'center' }}>
+                        {lastTrxData.store?.logoUrl && (
+                            <img src={lastTrxData.store.logoUrl} alt="Store Logo" />
+                        )}
+                        <h2 style={{ margin: 0, fontSize: '16px' }}>{lastTrxData.store?.storeName || 'SAVORIA BISTRO'}</h2>
+                        <p style={{ fontSize: '9px', margin: '2px 0' }}>{lastTrxData.store?.address || 'Jakarta, Indonesia'}</p>
+                        <p style={{ fontSize: '9px', margin: 0 }}>{lastTrxData.store?.phone || ''}</p>
+                    </div>
+                    <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }}></div>
+                    <div style={{ fontSize: '10px' }}>
+                        <div>INV : {lastTrxData.transaction.invoiceNumber}</div>
+                        <div>TGL : {new Date(lastTrxData.transaction.createdAt).toLocaleString('id-ID')}</div>
+                        <div>KASIR: {lastTrxData.transaction.user?.name || 'Staff'}</div>
+                        <div>CUST : {lastTrxData.transaction.customer?.name || 'Guest'}</div>
+                    </div>
+                    <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }}></div>
+                    <div style={{ fontSize: '10px' }}>
+                        {lastTrxData.transaction.items.map((item, i) => (
+                            <div key={i} style={{ marginBottom: '5px' }}>
+                                <div style={{ fontWeight: 'bold' }}>{item.product?.name}</div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>{item.qty} x {Number(item.price).toLocaleString()}</span>
+                                    <span>{(item.qty * Number(item.price)).toLocaleString()}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }}></div>
+                    <div style={{ fontSize: '10px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Subtotal</span>
+                            <span>{Number(lastTrxData.transaction.subTotal).toLocaleString()}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Pajak ({lastTrxData.store?.taxRate || 14}%)</span>
+                            <span>{Number(lastTrxData.transaction.taxAmount).toLocaleString()}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '12px', marginTop: '5px' }}>
+                            <span>TOTAL</span>
+                            <span>Rp {Number(lastTrxData.transaction.grandTotal).toLocaleString()}</span>
+                        </div>
+                    </div>
+                    <div style={{ borderTop: '1px dashed #000', margin: '10px 0' }}></div>
+                    <div style={{ textAlign: 'center', fontSize: '9px' }}>
+                        <p>{lastTrxData.store?.receiptFooter || 'Terima kasih atas kunjungan Anda!'}</p>
+                        <p style={{ marginTop: '5px', fontSize: '7px' }}>Powered by Nands Enterprise POS</p>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
 }
