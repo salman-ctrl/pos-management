@@ -147,10 +147,10 @@ export default function POSPage() {
 
     const removeFromCart = (id) => setCart(cart.filter(item => item.id !== id));
 
-    // --- CALCULATIONS (DYNAMIC FROM SETTINGS) ---
+    // --- CALCULATIONS ---
     const subTotal = cart.reduce((sum, item) => sum + (Number(item.price) * item.qty), 0);
-    const taxRate = storeSettings?.taxRate ? Number(storeSettings.taxRate) / 100 : 0.14; // Default 14% sesuai setting Salman
-    const taxAmount = subTotal * taxRate;
+    const taxRateValue = storeSettings?.taxRate ? Number(storeSettings.taxRate) / 100 : 0.14;
+    const taxAmount = subTotal * taxRateValue;
     const grandTotal = subTotal + taxAmount;
 
     const deficit = Math.max(0, grandTotal - cashGiven);
@@ -165,7 +165,7 @@ export default function POSPage() {
     // --- PRINT LOGIC ---
     const handlePrintReceipt = () => {
         setIsPrinting(true);
-        // Kita berikan jeda sedikit agar DOM template struk siap
+        // Jeda 800ms agar data selesai ter-render di template struk
         setTimeout(() => {
             window.print();
             setIsPrinting(false);
@@ -198,13 +198,14 @@ export default function POSPage() {
             const resJson = await res.json();
             if (!resJson.success) throw new Error(resJson.message);
 
-            // Simpan data untuk struk (transaction + store data)
+            // Simpan data lengkap untuk struk (transaction + items + store info)
             setLastTrxData(resJson.data);
 
             if (type === 'QRIS' && resJson.data.midtransToken) {
                 window.snap.pay(resJson.data.midtransToken, {
                     onSuccess: function (result) {
                         setPaymentStep('SUCCESS');
+                        // Cek pengaturan cetak otomatis
                         if (resJson.data.store?.autoPrintReceipt) handlePrintReceipt();
                         showAlert.success("Pembayaran Sukses", "Transaksi QRIS berhasil!");
                     },
@@ -247,11 +248,9 @@ export default function POSPage() {
         setSelectedMember(null);
         setMobileView('menu');
         setLastTrxData(null);
-        // Refresh produk untuk update stok terbaru dari database
         window.location.reload();
     }
 
-    // Handle Member Select from Modal
     const handleMemberSelect = (member) => {
         setSelectedMember(member);
         setIsMemberModalOpen(false);
@@ -261,54 +260,45 @@ export default function POSPage() {
     return (
         <div className="flex flex-col lg:flex-row h-screen bg-gray-50 overflow-hidden font-sans text-gray-800">
 
-            {/* CSS PRINT ENGINE */}
+            {/* --- CSS PRINT ENGINE (FIXED) --- */}
             <style>{`
-        @media print {
-          /* Sembunyikan semua UI Dashboard */
-          body * { visibility: hidden; }
-          
-          /* Tampilkan area struk saja */
-          #receipt-print, #receipt-print * { visibility: visible; }
-          
-          #receipt-print {
-            display: block !important;
-            position: absolute;
-            left: 0; top: 0;
-            width: 58mm; /* Ukuran standard thermal printer mini */
-            padding: 2mm;
-            background: white;
-            color: black;
-            font-family: 'Courier New', Courier, monospace;
-            line-height: 1.2;
-          }
-          #receipt-print img { max-width: 40mm; display: block; margin: 0 auto 5px; }
-        }
-      `}</style>
+                @media print {
+                    /* Sembunyikan SEMUA elemen termasuk layout admin */
+                    body * { visibility: hidden; }
+                    
+                    /* Tampilkan HANYA elemen struk dan isinya */
+                    #receipt-print, #receipt-print * { visibility: visible; }
+                    
+                    #receipt-print {
+                        display: block !important;
+                        position: fixed;
+                        left: 0;
+                        top: 0;
+                        width: 58mm; /* Lebar standar printer thermal mini */
+                        padding: 2mm;
+                        background: white;
+                        color: black;
+                        font-family: 'Courier New', Courier, monospace;
+                        font-size: 10px;
+                        line-height: 1.2;
+                        height: auto;
+                    }
+                    
+                    /* Hilangkan margin default browser */
+                    @page { margin: 0; size: auto; }
+                }
+            `}</style>
 
             {/* KIRI: HEADER + KATEGORI + PRODUK */}
             <div className={`flex-1 flex flex-col min-w-0 relative ${mobileView !== 'menu' ? 'hidden lg:flex' : 'flex'}`}>
-                <Header
-                    search={search}
-                    setSearch={setSearch}
-                    currentUser={currentUser}
-                />
-
-                <CategoryFilter
-                    categories={categories}
-                    selectedCategory={selectedCategory}
-                    setSelectedCategory={setSelectedCategory}
-                />
-
+                <Header search={search} setSearch={setSearch} currentUser={currentUser} />
+                <CategoryFilter categories={categories} selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} />
                 <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4 lg:py-6 bg-gray-50/50 pb-32 lg:pb-6">
-                    <ProductGrid
-                        products={filteredProducts}
-                        addToCart={addToCart}
-                        getImageUrl={getImageUrl}
-                    />
+                    <ProductGrid products={filteredProducts} addToCart={addToCart} getImageUrl={getImageUrl} />
                 </div>
             </div>
 
-            {/* KANAN: SIDEBAR KERANJANG */}
+            {/* KANAN: SIDEBAR */}
             <CartSidebar
                 cart={cart}
                 mobileView={mobileView}
@@ -324,7 +314,7 @@ export default function POSPage() {
                 grandTotal={grandTotal}
                 subTotal={subTotal}
                 taxAmount={taxAmount}
-                taxRate={taxRate * 100}
+                taxRate={taxRateValue * 100}
                 handleLogout={() => {
                     if (confirm('Keluar?')) {
                         localStorage.removeItem('token');
@@ -334,60 +324,33 @@ export default function POSPage() {
                 }}
             />
 
-            {/* --- MODALS --- */}
-            <MemberModal
-                isOpen={isMemberModalOpen}
-                onClose={() => setIsMemberModalOpen(false)}
-                memberSearch={memberSearch}
-                setMemberSearch={setMemberSearch}
-                filteredMembers={filteredMembers}
-                handleMemberSelect={handleMemberSelect}
-                getImageUrl={getImageUrl}
-            />
-
-            <PaymentModal
-                isOpen={isPaymentModalOpen}
-                onClose={() => setIsPaymentModalOpen(false)}
-                paymentStep={paymentStep}
-                setPaymentStep={setPaymentStep}
-                paymentMethod={paymentMethod}
-                setPaymentMethod={setPaymentMethod}
-                cashGiven={cashGiven}
-                handleCashInput={handleCashInput}
-                isCashSufficient={isCashSufficient}
-                change={change}
-                deficit={deficit}
-                handleProcessTransaction={handleProcessTransaction}
-                resetTransaction={resetTransaction}
-                isProcessing={isProcessing}
-                isPrinting={isPrinting}
-                grandTotal={grandTotal}
-                formatNumber={formatNumber}
-            />
+            {/* MODALS */}
+            <MemberModal isOpen={isMemberModalOpen} onClose={() => setIsMemberModalOpen(false)} memberSearch={memberSearch} setMemberSearch={setMemberSearch} filteredMembers={filteredMembers} handleMemberSelect={handleMemberSelect} getImageUrl={getImageUrl} />
+            <PaymentModal isOpen={isPaymentModalOpen} onClose={() => setIsPaymentModalOpen(false)} paymentStep={paymentStep} setPaymentStep={setPaymentStep} paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod} cashGiven={cashGiven} handleCashInput={handleCashInput} isCashSufficient={isCashSufficient} change={change} deficit={deficit} handleProcessTransaction={handleProcessTransaction} resetTransaction={resetTransaction} isProcessing={isProcessing} isPrinting={isPrinting} grandTotal={grandTotal} formatNumber={formatNumber} />
 
             {/* --- HIDDEN RECEIPT TEMPLATE (STRUK FISIK) --- */}
             {lastTrxData && (
-                <div id="receipt-print" className="hidden">
+                <div id="receipt-print" style={{ display: 'none' }}>
                     <div style={{ textAlign: 'center' }}>
                         {lastTrxData.store?.logoUrl && (
-                            <img src={lastTrxData.store.logoUrl} alt="Store Logo" />
+                            <img src={lastTrxData.store.logoUrl} alt="Store Logo" style={{ maxWidth: '30mm', marginBottom: '5px' }} />
                         )}
-                        <h2 style={{ margin: 0, fontSize: '16px' }}>{lastTrxData.store?.storeName || 'SAVORIA BISTRO'}</h2>
+                        <h2 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold' }}>{lastTrxData.store?.storeName || 'SAVORIA BISTRO'}</h2>
                         <p style={{ fontSize: '9px', margin: '2px 0' }}>{lastTrxData.store?.address || 'Jakarta, Indonesia'}</p>
                         <p style={{ fontSize: '9px', margin: 0 }}>{lastTrxData.store?.phone || ''}</p>
                     </div>
                     <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }}></div>
-                    <div style={{ fontSize: '10px' }}>
+                    <div style={{ fontSize: '9px' }}>
                         <div>INV : {lastTrxData.transaction.invoiceNumber}</div>
                         <div>TGL : {new Date(lastTrxData.transaction.createdAt).toLocaleString('id-ID')}</div>
                         <div>KASIR: {lastTrxData.transaction.user?.name || 'Staff'}</div>
                         <div>CUST : {lastTrxData.transaction.customer?.name || 'Guest'}</div>
                     </div>
                     <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }}></div>
-                    <div style={{ fontSize: '10px' }}>
+                    <div style={{ fontSize: '9px' }}>
                         {lastTrxData.transaction.items.map((item, i) => (
                             <div key={i} style={{ marginBottom: '5px' }}>
-                                <div style={{ fontWeight: 'bold' }}>{item.product?.name}</div>
+                                <div style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>{item.product?.name}</div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                     <span>{item.qty} x {Number(item.price).toLocaleString()}</span>
                                     <span>{(item.qty * Number(item.price)).toLocaleString()}</span>
@@ -396,7 +359,7 @@ export default function POSPage() {
                         ))}
                     </div>
                     <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }}></div>
-                    <div style={{ fontSize: '10px' }}>
+                    <div style={{ fontSize: '9px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <span>Subtotal</span>
                             <span>{Number(lastTrxData.transaction.subTotal).toLocaleString()}</span>
@@ -405,15 +368,15 @@ export default function POSPage() {
                             <span>Pajak ({lastTrxData.store?.taxRate || 14}%)</span>
                             <span>{Number(lastTrxData.transaction.taxAmount).toLocaleString()}</span>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '12px', marginTop: '5px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '11px', marginTop: '5px' }}>
                             <span>TOTAL</span>
                             <span>Rp {Number(lastTrxData.transaction.grandTotal).toLocaleString()}</span>
                         </div>
                     </div>
                     <div style={{ borderTop: '1px dashed #000', margin: '10px 0' }}></div>
-                    <div style={{ textAlign: 'center', fontSize: '9px' }}>
+                    <div style={{ textAlign: 'center', fontSize: '8px' }}>
                         <p>{lastTrxData.store?.receiptFooter || 'Terima kasih atas kunjungan Anda!'}</p>
-                        <p style={{ marginTop: '5px', fontSize: '7px' }}>Powered by Nands Enterprise POS</p>
+                        <p style={{ marginTop: '5px', fontSize: '6px', opacity: 0.5 }}>Powered by Nands Enterprise POS</p>
                     </div>
                 </div>
             )}
