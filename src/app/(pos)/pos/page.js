@@ -291,37 +291,33 @@ export default function POSPage() {
         <div className="flex flex-col lg:flex-row h-screen bg-gray-50 overflow-hidden font-sans text-gray-800">
             <style>{`
     #receipt-print {
-        position: absolute;
-        opacity: 0;
-        pointer-events: none;
-        z-index: -1;
+        position: fixed;
         left: -9999px;
         top: 0;
+        width: 58mm;
+        background: white;
     }
     
     @media print {
-        html, body {
-            height: auto;
-            overflow: visible;
+        @page {
+            size: 58mm auto;
+            margin: 0;
         }
         
-        body * {
-            visibility: hidden !important;
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        
+        body > *:not(#receipt-print) {
             display: none !important;
         }
         
-        #receipt-print,
-        #receipt-print * {
-            visibility: visible !important;
-            display: block !important;
-        }
-        
         #receipt-print {
-            position: absolute !important;
+            position: static !important;
             left: 0 !important;
             top: 0 !important;
-            opacity: 1 !important;
-            z-index: 9999 !important;
+            display: block !important;
             width: 58mm !important;
             padding: 4mm !important;
             background: white !important;
@@ -331,9 +327,13 @@ export default function POSPage() {
             line-height: 1.4 !important;
         }
         
-        @page {
-            size: 58mm auto;
-            margin: 0;
+        #receipt-print * {
+            visibility: visible !important;
+        }
+        
+        #receipt-print img {
+            display: block !important;
+            max-width: 35mm !important;
         }
     }
 `}</style>
