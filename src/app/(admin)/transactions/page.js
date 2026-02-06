@@ -1,260 +1,435 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { Search, ChevronLeft, ChevronRight, Eye, RefreshCw, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
-// Import modal dari folder components
-import TransactionDetailModal from '../../../components/TransactionDetailModal';
+import { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+import Header from '@/components/pos/Header';
+import CategoryFilter from '@/components/pos/CategoryFilter';
+import ProductGrid from '@/components/pos/ProductGrid';
+import CartSidebar from '@/components/pos/CartSidebar';
+import MemberModal from '@/components/pos/MemberModal';
+import PaymentModal from '@/components/pos/PaymentModal';
+
+import { showAlert } from '@/utils/swal';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const MIDTRANS_CLIENT_KEY = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY;
 
-export default function TransactionsPage() {
-    const [transactions, setTransactions] = useState([]);
-    const [meta, setMeta] = useState({ page: 1, totalPages: 1, total: 0 });
-    const [isLoading, setIsLoading] = useState(true);
+export default function POSPage() {
+    const router = useRouter();
 
+    const [products, setProducts] = useState([]);
+    const [members, setMembers] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [currentUser, setCurrentUser] = useState(null);
+    const [storeSettings, setStoreSettings] = useState(null);
+
+    const [cart, setCart] = useState([]);
     const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState('');
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('Semua');
+    const [mobileView, setMobileView] = useState('menu');
 
-    const [selectedTransaction, setSelectedTransaction] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedMember, setSelectedMember] = useState(null);
+    const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
+    const [memberSearch, setMemberSearch] = useState('');
 
-    const fetchTransactions = async (page = 1) => {
-        setIsLoading(true);
-        try {
-            const token = localStorage.getItem('token');
-            const headers = { 'Authorization': `Bearer ${token}` };
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [paymentStep, setPaymentStep] = useState('SELECT');
+    const [paymentMethod, setPaymentMethod] = useState('');
+    const [cashGiven, setCashGiven] = useState(0);
+    const [isPrinting, setIsPrinting] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
 
-            const params = new URLSearchParams({
-                page: page,
-                limit: 10,
-            });
-
-            if (search) params.append('search', search);
-            if (statusFilter) params.append('status', statusFilter);
-            if (startDate && endDate) {
-                params.append('startDate', startDate);
-                params.append('endDate', endDate);
-            }
-
-            const res = await fetch(`${API_URL}/api/transactions?${params.toString()}`, { headers });
-            const json = await res.json();
-
-            if (json.success) {
-                setTransactions(json.data);
-                setMeta(json.meta || { page: 1, totalPages: 1, total: 0 });
-            }
-        } catch (error) {
-            console.error("Gagal load transaksi:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const [lastTrxData, setLastTrxData] = useState(null);
+    const [readyToPrint, setReadyToPrint] = useState(false);
 
     useEffect(() => {
-        const timer = setTimeout(() => {
-            fetchTransactions(1);
-        }, 500);
-        return () => clearTimeout(timer);
-    }, [search, statusFilter, startDate, endDate]);
+        const fetchData = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const userStr = localStorage.getItem('user');
 
-    const handlePageChange = (newPage) => {
-        if (newPage >= 1 && newPage <= meta.totalPages) {
-            fetchTransactions(newPage);
+                if (userStr) {
+                    setCurrentUser(JSON.parse(userStr));
+                }
+
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+                const [prodRes, catRes, memRes, setRes] = await Promise.all([
+                    fetch(`${API_URL}/api/products`, { headers }),
+                    fetch(`${API_URL}/api/products/categories`, { headers }),
+                    fetch(`${API_URL}/api/customers`, { headers }),
+                    fetch(`${API_URL}/api/settings`, { headers })
+                ]);
+
+                const prodData = await prodRes.json();
+                const catData = await catRes.json();
+                const memData = await memRes.json();
+                const setData = await setRes.json();
+
+                if (prodData.success) setProducts(prodData.data);
+                if (catData.success) setCategories([{ id: 0, name: 'Semua' }, ...catData.data]);
+                if (memData.success) setMembers(memData.data);
+                if (setData.success) setStoreSettings(setData.data);
+
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                showAlert.error("Gagal Memuat Data", "Cek koneksi backend.");
+            }
+        };
+
+        fetchData();
+
+        const script = document.createElement('script');
+        script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
+        script.setAttribute('data-client-key', MIDTRANS_CLIENT_KEY);
+        document.body.appendChild(script);
+
+        return () => {
+            if (document.body.contains(script)) document.body.removeChild(script);
+        }
+    }, []);
+
+    // ✅ USEEFFECT BARU - Trigger print setelah lastTrxData ter-set dan SUCCESS
+    useEffect(() => {
+        console.log('🖨️ Print Check:', {
+            hasData: !!lastTrxData,
+            step: paymentStep,
+            shouldPrint: lastTrxData?.store?.autoPrintReceipt,
+            isPrinting
+        });
+
+        if (lastTrxData && paymentStep === 'SUCCESS' && lastTrxData.store?.autoPrintReceipt && !isPrinting) {
+            console.log('📄 Data Transaksi untuk Print:', lastTrxData);
+
+            setIsPrinting(true);
+
+            // Beri waktu cukup untuk render DOM
+            const timer = setTimeout(() => {
+                console.log('🖨️ Memulai Print...');
+                window.print();
+
+                // Reset setelah print
+                setTimeout(() => {
+                    setIsPrinting(false);
+                }, 1000);
+            }, 1500); // Delay 1.5 detik untuk memastikan render selesai
+
+            return () => clearTimeout(timer);
+        }
+    }, [lastTrxData, paymentStep]); // Trigger saat data atau step berubah
+
+    const filteredProducts = useMemo(() => {
+        return products.filter(p => {
+            const matchSearch = (p.name || '').toLowerCase().includes(search.toLowerCase());
+            const categoryName = p.category ? p.category.name : 'Uncategorized';
+            const matchCategory = selectedCategory === 'Semua' || categoryName === selectedCategory;
+            return matchSearch && matchCategory;
+        });
+    }, [search, selectedCategory, products]);
+
+    const filteredMembers = useMemo(() => {
+        if (!memberSearch) return members;
+        return members.filter(m =>
+            (m.name || '').toLowerCase().includes(memberSearch.toLowerCase()) ||
+            (m.memberId && m.memberId.toLowerCase().includes(memberSearch.toLowerCase())) ||
+            (m.phone && m.phone.includes(memberSearch))
+        );
+    }, [memberSearch, members]);
+
+    const addToCart = (product) => {
+        if (product.stock <= 0) return showAlert.warning("Stok Habis", "Produk ini tidak bisa dipilih.");
+
+        const existing = cart.find(item => item.id === product.id);
+        if (existing) {
+            if (existing.qty + 1 > product.stock) return showAlert.warning("Stok Terbatas", "Jumlah melebihi stok yang tersedia.");
+            setCart(cart.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item));
+        } else {
+            setCart([...cart, { ...product, qty: 1 }]);
         }
     };
 
-    const handleOpenDetail = async (id) => {
+    const updateQty = (id, delta) => {
+        setCart(cart.map(item => {
+            if (item.id === id) {
+                const product = products.find(p => p.id === id);
+                if (delta > 0 && item.qty + 1 > product.stock) {
+                    showAlert.warning("Batas Stok", "Stok produk tidak mencukupi.");
+                    return item;
+                }
+                const newQty = Math.max(0, item.qty + delta);
+                return { ...item, qty: newQty };
+            }
+            return item;
+        }).filter(item => item.qty > 0));
+    };
+
+    const removeFromCart = (id) => setCart(cart.filter(item => item.id !== id));
+
+    const subTotal = cart.reduce((sum, item) => sum + (Number(item.price) * item.qty), 0);
+    const serviceRate = storeSettings?.serviceCharge ? Number(storeSettings.serviceCharge) / 100 : 0.01;
+    const taxRate = storeSettings?.taxRate ? Number(storeSettings.taxRate) / 100 : 0.14;
+
+    const serviceAmount = Math.round(subTotal * serviceRate);
+    const taxAmount = Math.round((subTotal + serviceAmount) * taxRate);
+    const grandTotal = subTotal + serviceAmount + taxAmount;
+
+    const deficit = Math.max(0, grandTotal - cashGiven);
+    const change = Math.max(0, cashGiven - grandTotal);
+    const isCashSufficient = cashGiven >= grandTotal;
+
+    const formatNumber = (num) => num.toLocaleString('id-ID');
+    const handleCashInput = (e) => setCashGiven(Number(e.target.value.replace(/\D/g, '')));
+    const getImageUrl = (path) => !path ? null : (path.startsWith('http') ? path : `${API_URL}${path}`);
+
+    const handleProcessTransaction = async (type) => {
+        setIsProcessing(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`${API_URL}/api/transactions/${id}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+            const userId = currentUser ? currentUser.id : 1;
+
+            const payload = {
+                userId: userId,
+                customerId: selectedMember ? selectedMember.id : null,
+                items: cart.map(c => ({ productId: c.id, qty: c.qty })),
+                payment: { type: type, amount: grandTotal }
+            };
+
+            const res = await fetch(`${API_URL}/api/transactions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : ''
+                },
+                body: JSON.stringify(payload)
             });
-            const json = await res.json();
-            if (json.success) {
-                setSelectedTransaction(json.data);
-                setIsModalOpen(true);
+
+            const resJson = await res.json();
+            if (!resJson.success) throw new Error(resJson.message);
+
+            console.log('✅ Response dari Backend:', resJson.data);
+
+            // Set data transaksi
+            setLastTrxData(resJson.data);
+
+            if (type === 'QRIS' && resJson.data.midtransToken) {
+                window.snap.pay(resJson.data.midtransToken, {
+                    onSuccess: function (result) {
+                        console.log('💳 QRIS Payment Success');
+                        setPaymentStep('SUCCESS');
+                        showAlert.success("Pembayaran Sukses", "Transaksi QRIS berhasil!");
+                        // Print akan di-handle oleh useEffect
+                    },
+                    onPending: function (result) {
+                        console.log('⏳ QRIS Payment Pending');
+                        setPaymentStep('SUCCESS');
+                        showAlert.info("Menunggu", "Pembayaran sedang diproses.");
+                        // Print akan di-handle oleh useEffect
+                    },
+                    onError: function (result) {
+                        showAlert.error("Gagal", "Pembayaran gagal.");
+                    },
+                    onClose: function () {
+                        showAlert.warning("Dibatalkan", "Anda menutup popup pembayaran.");
+                    }
+                });
+            } else {
+                // CASH Payment
+                console.log('💵 Cash Payment Success');
+                setPaymentStep('SUCCESS');
+                showAlert.success("Pembayaran Sukses", "Transaksi tunai berhasil disimpan.");
+                // Print akan di-handle oleh useEffect
             }
+
         } catch (error) {
-            console.error(error);
-            alert("Gagal memuat detail transaksi");
+            console.error('❌ Transaction Error:', error);
+            showAlert.error("Transaksi Gagal", error.message);
+        } finally {
+            setIsProcessing(false);
         }
     };
 
-    const formatRp = (num) => "Rp " + (Number(num) || 0).toLocaleString('id-ID');
-    const formatDate = (dateStr) => new Date(dateStr).toLocaleString('id-ID', {
-        day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-    });
+    const handlePaymentOpen = () => {
+        setPaymentStep('SELECT');
+        setPaymentMethod('');
+        setCashGiven(0);
+        setIsPaymentModalOpen(true);
+    }
+
+    const resetTransaction = () => {
+        setIsPaymentModalOpen(false);
+        setCart([]);
+        setSelectedMember(null);
+        setMobileView('menu');
+        setLastTrxData(null);
+        setPaymentStep('SELECT');
+        setIsPrinting(false);
+        window.location.reload();
+    }
+
+    const handleMemberSelect = (member) => {
+        setSelectedMember(member);
+        setIsMemberModalOpen(false);
+        setMemberSearch('');
+    }
 
     return (
-        <div className="space-y-6">
-            {/* Header Filter Bar */}
-            <div className="flex flex-col sm:flex-row justify-between gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                <div className="flex gap-6 overflow-x-auto pb-2 sm:pb-0 items-center">
-                    <div className="px-2">
-                        <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Total Data</p>
-                        <p className="text-xl font-black text-gray-800">{meta.total} <span className="text-sm font-normal text-gray-400">Transaksi</span></p>
-                    </div>
-                    <div className="h-8 w-[1px] bg-gray-200"></div>
-                    <div className="px-2">
-                        <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Status</p>
-                        <p className="text-sm font-medium text-gray-600 flex items-center gap-1">
-                            {statusFilter ? statusFilter : 'Semua'}
-                        </p>
-                    </div>
-                </div>
+        <div className="flex flex-col lg:flex-row h-screen bg-gray-50 overflow-hidden font-sans text-gray-800">
+            <style>{`
+                @media print {
+                    body * { visibility: hidden; }
+                    #receipt-print, #receipt-print * { visibility: visible !important; }
+                    #receipt-print {
+                        display: block !important;
+                        position: fixed;
+                        left: 0;
+                        top: 0;
+                        width: 58mm;
+                        padding: 4mm;
+                        background: white;
+                        color: black;
+                        font-family: 'Courier New', Courier, monospace;
+                        font-size: 10px;
+                        line-height: 1.4;
+                    }
+                    @page { margin: 0; size: auto; }
+                }
+            `}</style>
 
-                <div className="flex flex-wrap gap-2 items-center">
-                    {/* Date Filter */}
-                    <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
-                        <CalendarIcon size={14} className="text-gray-400" />
-                        <input
-                            type="date"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            className="bg-transparent text-xs outline-none w-24 text-gray-600"
-                        />
-                        <span className="text-gray-300">-</span>
-                        <input
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            className="bg-transparent text-xs outline-none w-24 text-gray-600"
-                        />
-                    </div>
+            <div className={`flex-1 flex flex-col min-w-0 relative ${mobileView !== 'menu' ? 'hidden lg:flex' : 'flex'}`}>
+                <Header
+                    search={search}
+                    setSearch={setSearch}
+                    currentUser={currentUser}
+                />
 
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-orange-500"
-                    >
-                        <option value="">Semua Status</option>
-                        <option value="PAID">Lunas (PAID)</option>
-                        <option value="PENDING">Pending</option>
-                        <option value="CANCELLED">Batal</option>
-                    </select>
+                <CategoryFilter
+                    categories={categories}
+                    selectedCategory={selectedCategory}
+                    setSelectedCategory={setSelectedCategory}
+                />
 
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                        <input
-                            type="text"
-                            placeholder="Cari Invoice..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-orange-500 w-40 sm:w-auto"
-                        />
-                    </div>
-
-                    <button onClick={() => fetchTransactions(1)} className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors">
-                        <RefreshCw size={18} />
-                    </button>
+                <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4 lg:py-6 bg-gray-50/50 pb-32 lg:pb-6">
+                    <ProductGrid
+                        products={filteredProducts}
+                        addToCart={addToCart}
+                        getImageUrl={getImageUrl}
+                    />
                 </div>
             </div>
 
-            {/* Main Table */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-gray-50 text-gray-500 uppercase text-xs border-b border-gray-100">
-                            <tr>
-                                <th className="px-6 py-4 font-semibold">No</th>
-                                <th className="px-6 py-4 font-semibold">Invoice</th>
-                                <th className="px-6 py-4 font-semibold">Waktu</th>
-                                <th className="px-6 py-4 font-semibold">Pelanggan</th>
-                                <th className="px-6 py-4 font-semibold">Total</th>
-                                <th className="px-6 py-4 font-semibold">Metode</th>
-                                <th className="px-6 py-4 font-semibold">Status</th>
-                                <th className="px-6 py-4 font-semibold text-center">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 bg-white">
-                            {isLoading ? (
-                                <tr>
-                                    <td colSpan="8" className="px-6 py-12 text-center text-gray-400">
-                                        <div className="flex justify-center items-center gap-2">
-                                            <Loader2 className="animate-spin" size={20} /> Memuat data...
-                                        </div>
-                                    </td>
-                                </tr>
-                            ) : transactions.length === 0 ? (
-                                <tr>
-                                    <td colSpan="8" className="px-6 py-12 text-center text-gray-400">Tidak ada transaksi ditemukan.</td>
-                                </tr>
-                            ) : (
-                                transactions.map((trx, index) => (
-                                    <tr key={trx.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4 text-gray-400 text-xs">
-                                            {(meta.page - 1) * 10 + index + 1}
-                                        </td>
-                                        <td className="px-6 py-4 font-bold text-gray-800 font-mono text-xs">
-                                            {trx.invoiceNumber}
-                                        </td>
-                                        <td className="px-6 py-4 text-gray-500 text-xs whitespace-nowrap">
-                                            {formatDate(trx.createdAt)}
-                                        </td>
-                                        <td className="px-6 py-4 text-gray-800 font-medium">
-                                            {trx.customer ? trx.customer.name : 'Umum'}
-                                        </td>
-                                        <td className="px-6 py-4 font-bold text-gray-900">
-                                            {formatRp(trx.grandTotal)}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-[10px] font-bold uppercase border border-gray-200">
-                                                {trx.payments?.[0]?.paymentType || '-'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${trx.status === 'PAID' ? 'bg-green-50 text-green-600 border-green-100' :
-                                                trx.status === 'PENDING' ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
-                                                    'bg-red-50 text-red-600 border-red-100'
-                                                }`}>
-                                                {trx.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <button
-                                                onClick={() => handleOpenDetail(trx.id)}
-                                                className="text-gray-400 hover:text-orange-500 font-medium p-2 hover:bg-orange-50 rounded-lg transition-colors"
-                                            >
-                                                <Eye size={18} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/50">
-                    <span className="text-xs text-gray-500">
-                        Menampilkan halaman <span className="font-bold text-gray-800">{meta.page}</span> dari {meta.totalPages}
-                    </span>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => handlePageChange(meta.page - 1)}
-                            disabled={meta.page === 1}
-                            className="p-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-                        >
-                            <ChevronLeft size={16} />
-                        </button>
-                        <button
-                            onClick={() => handlePageChange(meta.page + 1)}
-                            disabled={meta.page === meta.totalPages}
-                            className="p-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-                        >
-                            <ChevronRight size={16} />
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <TransactionDetailModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                transaction={selectedTransaction}
+            <CartSidebar
+                cart={cart}
+                mobileView={mobileView}
+                setMobileView={setMobileView}
+                selectedMember={selectedMember}
+                setSelectedMember={setSelectedMember}
+                setIsMemberModalOpen={setIsMemberModalOpen}
+                removeFromCart={removeFromCart}
+                updateQty={updateQty}
+                handlePaymentOpen={handlePaymentOpen}
+                setCart={setCart}
+                getImageUrl={getImageUrl}
+                grandTotal={grandTotal}
+                subTotal={subTotal}
+                taxAmount={taxAmount}
+                taxRate={taxRate * 100}
+                handleLogout={() => {
+                    if (confirm('Keluar?')) {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        router.push('/login');
+                    }
+                }}
             />
+
+            <MemberModal
+                isOpen={isMemberModalOpen}
+                onClose={() => setIsMemberModalOpen(false)}
+                memberSearch={memberSearch}
+                setMemberSearch={setMemberSearch}
+                filteredMembers={filteredMembers}
+                handleMemberSelect={handleMemberSelect}
+                getImageUrl={getImageUrl}
+            />
+
+            <PaymentModal
+                isOpen={isPaymentModalOpen}
+                onClose={() => setIsPaymentModalOpen(false)}
+                paymentStep={paymentStep}
+                setPaymentStep={setPaymentStep}
+                paymentMethod={paymentMethod}
+                setPaymentMethod={setPaymentMethod}
+                cashGiven={cashGiven}
+                handleCashInput={handleCashInput}
+                isCashSufficient={isCashSufficient}
+                change={change}
+                deficit={deficit}
+                handleProcessTransaction={handleProcessTransaction}
+                resetTransaction={resetTransaction}
+                isProcessing={isProcessing}
+                isPrinting={isPrinting}
+                grandTotal={grandTotal}
+                formatNumber={formatNumber}
+                currentInvoiceNumber={lastTrxData?.transaction?.invoiceNumber}
+            />
+
+            {/* ✅ RECEIPT PRINT TEMPLATE - Pastikan lastTrxData ada */}
+            {lastTrxData && (
+                <div id="receipt-print" style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+                        {lastTrxData.store?.logoUrl && (
+                            <img src={lastTrxData.store.logoUrl} alt="Logo" style={{ maxWidth: '35mm', marginBottom: '8px', display: 'block', marginLeft: 'auto', marginRight: 'auto' }} />
+                        )}
+                        <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold' }}>{lastTrxData.store?.storeName || 'NANDS STORE'}</h2>
+                        <p style={{ fontSize: '9px', margin: '2px 0' }}>{lastTrxData.store?.address || 'Jakarta, Indonesia'}</p>
+                        <p style={{ fontSize: '9px', margin: 0 }}>{lastTrxData.store?.phone || ''}</p>
+                    </div>
+                    <div style={{ borderTop: '1px dashed #000', margin: '8px 0' }}></div>
+                    <div style={{ fontSize: '10px' }}>
+                        <div>INV : {lastTrxData.transaction?.invoiceNumber || '-'}</div>
+                        <div>TGL : {lastTrxData.transaction?.createdAt ? new Date(lastTrxData.transaction.createdAt).toLocaleString('id-ID') : '-'}</div>
+                        <div>KASIR: {lastTrxData.transaction?.user?.name || 'Staff'}</div>
+                        <div>CUST : {lastTrxData.transaction?.customer?.name || 'UMUM'}</div>
+                    </div>
+                    <div style={{ borderTop: '1px dashed #000', margin: '8px 0' }}></div>
+                    <div style={{ fontSize: '10px' }}>
+                        {lastTrxData.transaction?.items?.map((item, i) => (
+                            <div key={i} style={{ marginBottom: '6px' }}>
+                                <div style={{ fontWeight: 'bold' }}>{item.product?.name || 'Menu'}</div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>{item.qty} x {Number(item.price).toLocaleString('id-ID')}</span>
+                                    <span>{(item.qty * Number(item.price)).toLocaleString('id-ID')}</span>
+                                </div>
+                            </div>
+                        )) || <div>Tidak ada item</div>}
+                    </div>
+                    <div style={{ borderTop: '1px dashed #000', margin: '8px 0' }}></div>
+                    <div style={{ fontSize: '10px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Subtotal</span>
+                            <span>{Number(lastTrxData.transaction?.subTotal || 0).toLocaleString('id-ID')}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Service ({lastTrxData.store?.serviceCharge || 1}%)</span>
+                            <span>{Math.round((lastTrxData.transaction?.subTotal || 0) * ((lastTrxData.store?.serviceCharge || 1) / 100)).toLocaleString('id-ID')}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Pajak ({lastTrxData.store?.taxRate || 14}%)</span>
+                            <span>{Number(lastTrxData.transaction?.taxAmount || 0).toLocaleString('id-ID')}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '12px', marginTop: '6px' }}>
+                            <span>TOTAL</span>
+                            <span>Rp {Number(lastTrxData.transaction?.grandTotal || 0).toLocaleString('id-ID')}</span>
+                        </div>
+                    </div>
+                    <div style={{ borderTop: '1px dashed #000', margin: '12px 0' }}></div>
+                    <div style={{ textAlign: 'center', fontSize: '9px' }}>
+                        <p>{lastTrxData.store?.receiptFooter || 'Terima kasih atas kunjungan Anda!'}</p>
+                        <p style={{ marginTop: '8px', opacity: 0.4 }}>Powered by Nands POS</p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
