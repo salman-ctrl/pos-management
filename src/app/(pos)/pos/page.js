@@ -2,13 +2,16 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useReactToPrint } from 'react-to-print';
 
+// Components
 import Header from '@/components/pos/Header';
 import CategoryFilter from '@/components/pos/CategoryFilter';
 import ProductGrid from '@/components/pos/ProductGrid';
 import CartSidebar from '@/components/pos/CartSidebar';
 import MemberModal from '@/components/pos/MemberModal';
 import PaymentModal from '@/components/pos/PaymentModal';
+import { ReceiptPrint } from '@/components/pos/ReceiptPrint'; // Import komponen baru
 
 import { showAlert } from '@/utils/swal';
 
@@ -18,6 +21,11 @@ const MIDTRANS_CLIENT_KEY = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY;
 export default function POSPage() {
     const router = useRouter();
 
+    // --- Refs ---
+    const printTriggeredRef = useRef(false);
+    const contentRef = useRef(null); // Ref untuk ReceiptPrint
+
+    // --- States ---
     const [products, setProducts] = useState([]);
     const [members, setMembers] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -41,17 +49,29 @@ export default function POSPage() {
     const [isProcessing, setIsProcessing] = useState(false);
 
     const [lastTrxData, setLastTrxData] = useState(null);
-    const printTriggeredRef = useRef(false);
 
+    // --- Printing Logic with react-to-print ---
+    const handlePrint = useReactToPrint({
+        contentRef,
+        documentTitle: `Receipt-${lastTrxData?.transaction?.invoiceNumber}`,
+        onAfterPrint: () => {
+            setIsPrinting(false);
+            console.log("🖨️ Selesai cetak.");
+        },
+        onPrintError: (error) => {
+            console.error("❌ Print Error:", error);
+            setIsPrinting(false);
+        }
+    });
+
+    // --- Fetch Initial Data ---
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const token = localStorage.getItem('token');
                 const userStr = localStorage.getItem('user');
 
-                if (userStr) {
-                    setCurrentUser(JSON.parse(userStr));
-                }
+                if (userStr) setCurrentUser(JSON.parse(userStr));
 
                 const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
@@ -80,6 +100,7 @@ export default function POSPage() {
 
         fetchData();
 
+        // Midtrans Snap Script
         const script = document.createElement('script');
         script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
         script.setAttribute('data-client-key', MIDTRANS_CLIENT_KEY);
@@ -90,53 +111,21 @@ export default function POSPage() {
         }
     }, []);
 
+    // --- Auto Print Trigger ---
     useEffect(() => {
-        console.log('🖨️ Print Check:', {
-            hasData: !!lastTrxData,
-            step: paymentStep,
-            shouldPrint: lastTrxData?.store?.autoPrintReceipt,
-            isPrinting,
-            printTriggered: printTriggeredRef.current
-        });
-
         if (lastTrxData && paymentStep === 'SUCCESS' && lastTrxData.store?.autoPrintReceipt && !printTriggeredRef.current) {
-            console.log('📄 Data Transaksi untuk Print:', lastTrxData);
-
+            console.log('📄 Triggering Auto Print...');
             printTriggeredRef.current = true;
             setIsPrinting(true);
 
-            // CRITICAL FIX: Tunggu React selesai render dengan requestAnimationFrame
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    setTimeout(() => {
-                        const receiptElement = document.getElementById('receipt-print');
-                        if (receiptElement) {
-                            const htmlContent = receiptElement.innerHTML;
-                            console.log('🖨️ Memulai Print...');
-                            console.log('📏 Receipt HTML Length:', htmlContent.length);
-                            console.log('🖨️ Receipt First 500 chars:', htmlContent.substring(0, 500));
-
-                            // Verifikasi HTML sudah lengkap (minimal 1000 karakter)
-                            if (htmlContent.length > 1000) {
-                                window.print();
-                            } else {
-                                console.error('⚠️ HTML belum lengkap, retry...');
-                                setTimeout(() => window.print(), 1000);
-                            }
-
-                            setTimeout(() => {
-                                setIsPrinting(false);
-                            }, 1500);
-                        } else {
-                            console.error('❌ Receipt element not found!');
-                            setIsPrinting(false);
-                        }
-                    }, 1000);
-                });
-            });
+            // Jeda sedikit untuk memastikan DOM komponen ReceiptPrint sudah siap
+            setTimeout(() => {
+                handlePrint();
+            }, 800);
         }
-    }, [lastTrxData, paymentStep]);
+    }, [lastTrxData, paymentStep, handlePrint]);
 
+    // --- Memoized Filters ---
     const filteredProducts = useMemo(() => {
         return products.filter(p => {
             const matchSearch = (p.name || '').toLowerCase().includes(search.toLowerCase());
@@ -155,12 +144,12 @@ export default function POSPage() {
         );
     }, [memberSearch, members]);
 
+    // --- Cart Actions ---
     const addToCart = (product) => {
         if (product.stock <= 0) return showAlert.warning("Stok Habis", "Produk ini tidak bisa dipilih.");
-
         const existing = cart.find(item => item.id === product.id);
         if (existing) {
-            if (existing.qty + 1 > product.stock) return showAlert.warning("Stok Terbatas", "Jumlah melebihi stok yang tersedia.");
+            if (existing.qty + 1 > product.stock) return showAlert.warning("Stok Terbatas", "Jumlah melebihi stok.");
             setCart(cart.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item));
         } else {
             setCart([...cart, { ...product, qty: 1 }]);
@@ -171,12 +160,8 @@ export default function POSPage() {
         setCart(cart.map(item => {
             if (item.id === id) {
                 const product = products.find(p => p.id === id);
-                if (delta > 0 && item.qty + 1 > product.stock) {
-                    showAlert.warning("Batas Stok", "Stok produk tidak mencukupi.");
-                    return item;
-                }
-                const newQty = Math.max(0, item.qty + delta);
-                return { ...item, qty: newQty };
+                if (delta > 0 && item.qty + 1 > product.stock) return item;
+                return { ...item, qty: Math.max(0, item.qty + delta) };
             }
             return item;
         }).filter(item => item.qty > 0));
@@ -184,18 +169,19 @@ export default function POSPage() {
 
     const removeFromCart = (id) => setCart(cart.filter(item => item.id !== id));
 
+    // --- Totals ---
     const subTotal = cart.reduce((sum, item) => sum + (Number(item.price) * item.qty), 0);
     const serviceRate = storeSettings?.serviceCharge ? Number(storeSettings.serviceCharge) / 100 : 0.01;
     const taxRate = storeSettings?.taxRate ? Number(storeSettings.taxRate) / 100 : 0.14;
-
     const serviceAmount = Math.round(subTotal * serviceRate);
     const taxAmount = Math.round((subTotal + serviceAmount) * taxRate);
     const grandTotal = subTotal + serviceAmount + taxAmount;
 
-    const deficit = Math.max(0, grandTotal - cashGiven);
     const change = Math.max(0, cashGiven - grandTotal);
+    const deficit = Math.max(0, grandTotal - cashGiven);
     const isCashSufficient = cashGiven >= grandTotal;
 
+    // --- Handlers ---
     const formatNumber = (num) => num.toLocaleString('id-ID');
     const handleCashInput = (e) => setCashGiven(Number(e.target.value.replace(/\D/g, '')));
     const getImageUrl = (path) => !path ? null : (path.startsWith('http') ? path : `${API_URL}${path}`);
@@ -204,11 +190,9 @@ export default function POSPage() {
         setIsProcessing(true);
         try {
             const token = localStorage.getItem('token');
-            const userId = currentUser ? currentUser.id : 1;
-
             const payload = {
-                userId: userId,
-                customerId: selectedMember ? selectedMember.id : null,
+                userId: currentUser?.id || 1,
+                customerId: selectedMember?.id || null,
                 items: cart.map(c => ({ productId: c.id, qty: c.qty })),
                 payment: { type: type, amount: grandTotal }
             };
@@ -225,35 +209,18 @@ export default function POSPage() {
             const resJson = await res.json();
             if (!resJson.success) throw new Error(resJson.message);
 
-            console.log('✅ Response dari Backend:', resJson.data);
-
             setLastTrxData(resJson.data);
 
             if (type === 'QRIS' && resJson.data.midtransToken) {
                 window.snap.pay(resJson.data.midtransToken, {
-                    onSuccess: function (result) {
-                        console.log('💳 QRIS Payment Success');
-                        setPaymentStep('SUCCESS');
-                        showAlert.success("Pembayaran Sukses", "Transaksi QRIS berhasil!");
-                    },
-                    onPending: function (result) {
-                        console.log('⏳ QRIS Payment Pending');
-                        setPaymentStep('SUCCESS');
-                        showAlert.info("Menunggu", "Pembayaran sedang diproses.");
-                    },
-                    onError: function (result) {
-                        showAlert.error("Gagal", "Pembayaran gagal.");
-                    },
-                    onClose: function () {
-                        showAlert.warning("Dibatalkan", "Anda menutup popup pembayaran.");
-                    }
+                    onSuccess: () => { setPaymentStep('SUCCESS'); showAlert.success("Sukses", "Pembayaran QRIS berhasil!"); },
+                    onPending: () => { setPaymentStep('SUCCESS'); showAlert.info("Pending", "Menunggu pembayaran."); },
+                    onError: () => showAlert.error("Gagal", "Pembayaran gagal."),
                 });
             } else {
-                console.log('💵 Cash Payment Success');
                 setPaymentStep('SUCCESS');
-                showAlert.success("Pembayaran Sukses", "Transaksi tunai berhasil disimpan.");
+                showAlert.success("Sukses", "Transaksi tunai berhasil!");
             }
-
         } catch (error) {
             console.error('❌ Transaction Error:', error);
             showAlert.error("Transaksi Gagal", error.message);
@@ -262,215 +229,65 @@ export default function POSPage() {
         }
     };
 
-    const handlePaymentOpen = () => {
-        setPaymentStep('SELECT');
-        setPaymentMethod('');
-        setCashGiven(0);
-        setIsPaymentModalOpen(true);
-    }
-
     const resetTransaction = () => {
         setIsPaymentModalOpen(false);
         setCart([]);
         setSelectedMember(null);
-        setMobileView('menu');
         setLastTrxData(null);
         setPaymentStep('SELECT');
-        setIsPrinting(false);
         printTriggeredRef.current = false;
-        window.location.reload();
-    }
-
-    const handleMemberSelect = (member) => {
-        setSelectedMember(member);
-        setIsMemberModalOpen(false);
-        setMemberSearch('');
-    }
+        // Opsional: window.location.reload() jika ingin benar-benar fresh
+    };
 
     return (
         <div className="flex flex-col lg:flex-row h-screen bg-gray-50 overflow-hidden font-sans text-gray-800">
-            <style>{`
-    #receipt-print {
-        position: fixed;
-        left: -9999px;
-        top: 0;
-        width: 58mm;
-        background: white;
-    }
-    
-    @media print {
-        @page {
-            size: 58mm auto;
-            margin: 0;
-        }
-        
-        body {
-            margin: 0;
-            padding: 0;
-        }
-        
-        body > *:not(#receipt-print) {
-            display: none !important;
-        }
-        
-        #receipt-print {
-            position: static !important;
-            left: 0 !important;
-            top: 0 !important;
-            display: block !important;
-            width: 58mm !important;
-            padding: 4mm !important;
-            background: white !important;
-            color: black !important;
-            font-family: 'Courier New', Courier, monospace !important;
-            font-size: 10px !important;
-            line-height: 1.4 !important;
-        }
-        
-        #receipt-print * {
-            visibility: visible !important;
-        }
-        
-        #receipt-print img {
-            display: block !important;
-            max-width: 35mm !important;
-        }
-    }
-`}</style>
 
+            {/* Main POS Interface */}
             <div className={`flex-1 flex flex-col min-w-0 relative ${mobileView !== 'menu' ? 'hidden lg:flex' : 'flex'}`}>
-                <Header
-                    search={search}
-                    setSearch={setSearch}
-                    currentUser={currentUser}
-                />
-
-                <CategoryFilter
-                    categories={categories}
-                    selectedCategory={selectedCategory}
-                    setSelectedCategory={setSelectedCategory}
-                />
+                <Header search={search} setSearch={setSearch} currentUser={currentUser} />
+                <CategoryFilter categories={categories} selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} />
 
                 <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4 lg:py-6 bg-gray-50/50 pb-32 lg:pb-6">
-                    <ProductGrid
-                        products={filteredProducts}
-                        addToCart={addToCart}
-                        getImageUrl={getImageUrl}
-                    />
+                    <ProductGrid products={filteredProducts} addToCart={addToCart} getImageUrl={getImageUrl} />
                 </div>
             </div>
 
             <CartSidebar
-                cart={cart}
-                mobileView={mobileView}
-                setMobileView={setMobileView}
-                selectedMember={selectedMember}
-                setSelectedMember={setSelectedMember}
-                setIsMemberModalOpen={setIsMemberModalOpen}
-                removeFromCart={removeFromCart}
-                updateQty={updateQty}
-                handlePaymentOpen={handlePaymentOpen}
-                setCart={setCart}
-                getImageUrl={getImageUrl}
-                grandTotal={grandTotal}
-                subTotal={subTotal}
-                taxAmount={taxAmount}
-                taxRate={taxRate * 100}
-                handleLogout={() => {
-                    if (confirm('Keluar?')) {
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('user');
-                        router.push('/login');
-                    }
-                }}
+                cart={cart} mobileView={mobileView} setMobileView={setMobileView}
+                selectedMember={selectedMember} setSelectedMember={setSelectedMember}
+                setIsMemberModalOpen={setIsMemberModalOpen} removeFromCart={removeFromCart}
+                updateQty={updateQty} handlePaymentOpen={() => { setPaymentStep('SELECT'); setCashGiven(0); setIsPaymentModalOpen(true); }}
+                setCart={setCart} getImageUrl={getImageUrl} grandTotal={grandTotal}
+                subTotal={subTotal} taxAmount={taxAmount} taxRate={taxRate * 100}
+                handleLogout={() => { if (confirm('Keluar?')) { localStorage.clear(); router.push('/login'); } }}
             />
 
+            {/* Modals */}
             <MemberModal
-                isOpen={isMemberModalOpen}
-                onClose={() => setIsMemberModalOpen(false)}
-                memberSearch={memberSearch}
-                setMemberSearch={setMemberSearch}
-                filteredMembers={filteredMembers}
-                handleMemberSelect={handleMemberSelect}
+                isOpen={isMemberModalOpen} onClose={() => setIsMemberModalOpen(false)}
+                memberSearch={memberSearch} setMemberSearch={setMemberSearch}
+                filteredMembers={filteredMembers} handleMemberSelect={(m) => { setSelectedMember(m); setIsMemberModalOpen(false); }}
                 getImageUrl={getImageUrl}
             />
 
             <PaymentModal
-                isOpen={isPaymentModalOpen}
-                onClose={() => setIsPaymentModalOpen(false)}
-                paymentStep={paymentStep}
-                setPaymentStep={setPaymentStep}
-                paymentMethod={paymentMethod}
-                setPaymentMethod={setPaymentMethod}
-                cashGiven={cashGiven}
-                handleCashInput={handleCashInput}
-                isCashSufficient={isCashSufficient}
-                change={change}
-                deficit={deficit}
-                handleProcessTransaction={handleProcessTransaction}
-                resetTransaction={resetTransaction}
-                isProcessing={isProcessing}
-                isPrinting={isPrinting}
-                grandTotal={grandTotal}
-                formatNumber={formatNumber}
-                currentInvoiceNumber={lastTrxData?.transaction?.invoiceNumber}
+                isOpen={isPaymentModalOpen} onClose={() => setIsPaymentModalOpen(false)}
+                paymentStep={paymentStep} setPaymentStep={setPaymentStep}
+                paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod}
+                cashGiven={cashGiven} handleCashInput={handleCashInput}
+                isCashSufficient={isCashSufficient} change={change} deficit={deficit}
+                handleProcessTransaction={handleProcessTransaction} resetTransaction={resetTransaction}
+                isProcessing={isProcessing} isPrinting={isPrinting} grandTotal={grandTotal}
+                formatNumber={formatNumber} currentInvoiceNumber={lastTrxData?.transaction?.invoiceNumber}
+                handleManualPrint={handlePrint} // Tambahkan tombol manual print di modal sukses jika perlu
             />
 
-            {lastTrxData && paymentStep === 'SUCCESS' && (
-                <div id="receipt-print" style={{ display: 'block' }}>
-                    <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-                        {lastTrxData.store?.logoUrl && (
-                            <img src={lastTrxData.store.logoUrl} alt="Logo" style={{ maxWidth: '35mm', marginBottom: '8px', display: 'block', marginLeft: 'auto', marginRight: 'auto' }} />
-                        )}
-                        <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold' }}>{lastTrxData.store?.storeName || 'NANDS STORE'}</h2>
-                        <p style={{ fontSize: '9px', margin: '2px 0' }}>{lastTrxData.store?.address || 'Jakarta, Indonesia'}</p>
-                        <p style={{ fontSize: '9px', margin: 0 }}>{lastTrxData.store?.phone || ''}</p>
-                    </div>
-                    <div style={{ borderTop: '1px dashed #000', margin: '8px 0' }}></div>
-                    <div style={{ fontSize: '10px' }}>
-                        <div>INV : {lastTrxData.transaction?.invoiceNumber || '-'}</div>
-                        <div>TGL : {lastTrxData.transaction?.createdAt ? new Date(lastTrxData.transaction.createdAt).toLocaleString('id-ID') : '-'}</div>
-                        <div>KASIR: {lastTrxData.transaction?.user?.name || 'Staff'}</div>
-                        <div>CUST : {lastTrxData.transaction?.customer?.name || 'UMUM'}</div>
-                    </div>
-                    <div style={{ borderTop: '1px dashed #000', margin: '8px 0' }}></div>
-                    <div style={{ fontSize: '10px' }}>
-                        {lastTrxData.transaction?.items?.map((item, i) => (
-                            <div key={i} style={{ marginBottom: '6px' }}>
-                                <div style={{ fontWeight: 'bold' }}>{item.product?.name || 'Menu'}</div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span>{item.qty} x {Number(item.price).toLocaleString('id-ID')}</span>
-                                    <span>{(item.qty * Number(item.price)).toLocaleString('id-ID')}</span>
-                                </div>
-                            </div>
-                        )) || <div>Tidak ada item</div>}
-                    </div>
-                    <div style={{ borderTop: '1px dashed #000', margin: '8px 0' }}></div>
-                    <div style={{ fontSize: '10px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Subtotal</span>
-                            <span>{Number(lastTrxData.transaction?.subTotal || 0).toLocaleString('id-ID')}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Service ({lastTrxData.store?.serviceCharge || 1}%)</span>
-                            <span>{Math.round((lastTrxData.transaction?.subTotal || 0) * ((lastTrxData.store?.serviceCharge || 1) / 100)).toLocaleString('id-ID')}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Pajak ({lastTrxData.store?.taxRate || 14}%)</span>
-                            <span>{Number(lastTrxData.transaction?.taxAmount || 0).toLocaleString('id-ID')}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '12px', marginTop: '6px' }}>
-                            <span>TOTAL</span>
-                            <span>Rp {Number(lastTrxData.transaction?.grandTotal || 0).toLocaleString('id-ID')}</span>
-                        </div>
-                    </div>
-                    <div style={{ borderTop: '1px dashed #000', margin: '12px 0' }}></div>
-                    <div style={{ textAlign: 'center', fontSize: '9px' }}>
-                        <p>{lastTrxData.store?.receiptFooter || 'Terima kasih atas kunjungan Anda!'}</p>
-                        <p style={{ marginTop: '8px', opacity: 0.4 }}>Powered by Nands POS</p>
-                    </div>
+            {/* Hidden Printing Component */}
+            <div className="hidden">
+                <div ref={contentRef}>
+                    {lastTrxData && <ReceiptPrint data={lastTrxData} />}
                 </div>
-            )}
+            </div>
         </div>
     );
 }
