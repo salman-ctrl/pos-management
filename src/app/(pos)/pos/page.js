@@ -90,16 +90,34 @@ export default function POSPage() {
         }
     }, []);
 
+    // ✅ USEEFFECT BARU - Trigger print setelah lastTrxData ter-set dan SUCCESS
     useEffect(() => {
-        if (readyToPrint && lastTrxData) {
+        console.log('🖨️ Print Check:', {
+            hasData: !!lastTrxData,
+            step: paymentStep,
+            shouldPrint: lastTrxData?.store?.autoPrintReceipt,
+            isPrinting
+        });
+
+        if (lastTrxData && paymentStep === 'SUCCESS' && lastTrxData.store?.autoPrintReceipt && !isPrinting) {
+            console.log('📄 Data Transaksi untuk Print:', lastTrxData);
+
+            setIsPrinting(true);
+
+            // Beri waktu cukup untuk render DOM
             const timer = setTimeout(() => {
+                console.log('🖨️ Memulai Print...');
                 window.print();
-                setReadyToPrint(false);
-                setIsPrinting(false);
-            }, 1200);
+
+                // Reset setelah print
+                setTimeout(() => {
+                    setIsPrinting(false);
+                }, 1000);
+            }, 1500); // Delay 1.5 detik untuk memastikan render selesai
+
             return () => clearTimeout(timer);
         }
-    }, [readyToPrint, lastTrxData]);
+    }, [lastTrxData, paymentStep]); // Trigger saat data atau step berubah
 
     const filteredProducts = useMemo(() => {
         return products.filter(p => {
@@ -189,23 +207,24 @@ export default function POSPage() {
             const resJson = await res.json();
             if (!resJson.success) throw new Error(resJson.message);
 
+            console.log('✅ Response dari Backend:', resJson.data);
+
+            // Set data transaksi
             setLastTrxData(resJson.data);
 
             if (type === 'QRIS' && resJson.data.midtransToken) {
                 window.snap.pay(resJson.data.midtransToken, {
                     onSuccess: function (result) {
+                        console.log('💳 QRIS Payment Success');
                         setPaymentStep('SUCCESS');
-                        if (resJson.data.store?.autoPrintReceipt) {
-                            setIsPrinting(true);
-                            setReadyToPrint(true);
-                        }
                         showAlert.success("Pembayaran Sukses", "Transaksi QRIS berhasil!");
+                        // Print akan di-handle oleh useEffect
                     },
                     onPending: function (result) {
+                        console.log('⏳ QRIS Payment Pending');
                         setPaymentStep('SUCCESS');
-                        setIsPrinting(true);
-                        setReadyToPrint(true);
                         showAlert.info("Menunggu", "Pembayaran sedang diproses.");
+                        // Print akan di-handle oleh useEffect
                     },
                     onError: function (result) {
                         showAlert.error("Gagal", "Pembayaran gagal.");
@@ -215,15 +234,15 @@ export default function POSPage() {
                     }
                 });
             } else {
+                // CASH Payment
+                console.log('💵 Cash Payment Success');
                 setPaymentStep('SUCCESS');
-                if (resJson.data.store?.autoPrintReceipt) {
-                    setIsPrinting(true);
-                    setReadyToPrint(true);
-                }
                 showAlert.success("Pembayaran Sukses", "Transaksi tunai berhasil disimpan.");
+                // Print akan di-handle oleh useEffect
             }
 
         } catch (error) {
+            console.error('❌ Transaction Error:', error);
             showAlert.error("Transaksi Gagal", error.message);
         } finally {
             setIsProcessing(false);
@@ -243,6 +262,8 @@ export default function POSPage() {
         setSelectedMember(null);
         setMobileView('menu');
         setLastTrxData(null);
+        setPaymentStep('SELECT');
+        setIsPrinting(false);
         window.location.reload();
     }
 
@@ -353,6 +374,7 @@ export default function POSPage() {
                 currentInvoiceNumber={lastTrxData?.transaction?.invoiceNumber}
             />
 
+            {/* ✅ RECEIPT PRINT TEMPLATE - Pastikan lastTrxData ada */}
             {lastTrxData && (
                 <div id="receipt-print" style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}>
                     <div style={{ textAlign: 'center', marginBottom: '10px' }}>
@@ -365,14 +387,14 @@ export default function POSPage() {
                     </div>
                     <div style={{ borderTop: '1px dashed #000', margin: '8px 0' }}></div>
                     <div style={{ fontSize: '10px' }}>
-                        <div>INV : {lastTrxData.transaction.invoiceNumber}</div>
-                        <div>TGL : {new Date(lastTrxData.transaction.createdAt).toLocaleString('id-ID')}</div>
-                        <div>KASIR: {lastTrxData.transaction.user?.name || 'Staff'}</div>
-                        <div>CUST : {lastTrxData.transaction.customer?.name || 'UMUM'}</div>
+                        <div>INV : {lastTrxData.transaction?.invoiceNumber || '-'}</div>
+                        <div>TGL : {lastTrxData.transaction?.createdAt ? new Date(lastTrxData.transaction.createdAt).toLocaleString('id-ID') : '-'}</div>
+                        <div>KASIR: {lastTrxData.transaction?.user?.name || 'Staff'}</div>
+                        <div>CUST : {lastTrxData.transaction?.customer?.name || 'UMUM'}</div>
                     </div>
                     <div style={{ borderTop: '1px dashed #000', margin: '8px 0' }}></div>
                     <div style={{ fontSize: '10px' }}>
-                        {lastTrxData.transaction.items.map((item, i) => (
+                        {lastTrxData.transaction?.items?.map((item, i) => (
                             <div key={i} style={{ marginBottom: '6px' }}>
                                 <div style={{ fontWeight: 'bold' }}>{item.product?.name || 'Menu'}</div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -380,25 +402,25 @@ export default function POSPage() {
                                     <span>{(item.qty * Number(item.price)).toLocaleString('id-ID')}</span>
                                 </div>
                             </div>
-                        ))}
+                        )) || <div>Tidak ada item</div>}
                     </div>
                     <div style={{ borderTop: '1px dashed #000', margin: '8px 0' }}></div>
                     <div style={{ fontSize: '10px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <span>Subtotal</span>
-                            <span>{Number(lastTrxData.transaction.subTotal).toLocaleString('id-ID')}</span>
+                            <span>{Number(lastTrxData.transaction?.subTotal || 0).toLocaleString('id-ID')}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <span>Service ({lastTrxData.store?.serviceCharge || 1}%)</span>
-                            <span>{Math.round(lastTrxData.transaction.subTotal * (lastTrxData.store?.serviceCharge / 100 || 0.01)).toLocaleString('id-ID')}</span>
+                            <span>{Math.round((lastTrxData.transaction?.subTotal || 0) * ((lastTrxData.store?.serviceCharge || 1) / 100)).toLocaleString('id-ID')}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <span>Pajak ({lastTrxData.store?.taxRate || 14}%)</span>
-                            <span>{Number(lastTrxData.transaction.taxAmount).toLocaleString('id-ID')}</span>
+                            <span>{Number(lastTrxData.transaction?.taxAmount || 0).toLocaleString('id-ID')}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '12px', marginTop: '6px' }}>
                             <span>TOTAL</span>
-                            <span>Rp {Number(lastTrxData.transaction.grandTotal).toLocaleString('id-ID')}</span>
+                            <span>Rp {Number(lastTrxData.transaction?.grandTotal || 0).toLocaleString('id-ID')}</span>
                         </div>
                     </div>
                     <div style={{ borderTop: '1px dashed #000', margin: '12px 0' }}></div>
