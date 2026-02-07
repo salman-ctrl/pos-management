@@ -103,7 +103,7 @@ export default function Dashboard() {
     <div className="space-y-6 pb-10">
       <div className="flex flex-col sm:flex-row justify-between items-end mb-2">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Dashboard Restoran</h2>
+          <h2 className="text-2xl font-bold text-gray-800">Dashboard Toko</h2>
           <p className="text-gray-500 text-sm mt-1">Ringkasan performa bisnis hari ini.</p>
         </div>
         <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 shadow-sm">

@@ -145,8 +145,8 @@ export default function ProductModal({ isOpen, onClose, onSave, initialData, cat
                         type="button"
                         onClick={() => setFormData({ ...formData, displayType: opt.id })}
                         className={`p-4 rounded-2xl border-2 text-left transition-all relative ${formData.displayType === opt.id
-                            ? 'border-orange-500 bg-orange-50/50 text-orange-950 shadow-md ring-8 ring-orange-500/5'
-                            : 'border-gray-100 text-gray-400 hover:border-gray-200 bg-white'
+                          ? 'border-orange-500 bg-orange-50/50 text-orange-950 shadow-md ring-8 ring-orange-500/5'
+                          : 'border-gray-100 text-gray-400 hover:border-gray-200 bg-white'
                           }`}
                       >
                         <p className="font-black text-xs">{opt.label}</p>
@@ -208,7 +208,10 @@ export default function ProductModal({ isOpen, onClose, onSave, initialData, cat
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-orange-600 uppercase tracking-widest block ml-1">Customer Price (Sell)</label>
                     <div className="relative">
-                      <DollarSign className="absolute left-5 top-1/2 -translate-y-1/2 text-orange-500" size={20} />
+                      <span className="absolute left-5 top-1/2 -translate-y-1/2 text-orange-500 font-bold">
+                        Rp
+                      </span>
+
                       <input
                         required
                         type="number"
@@ -222,7 +225,9 @@ export default function ProductModal({ isOpen, onClose, onSave, initialData, cat
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block ml-1">Base Cost (HPP)</label>
                     <div className="relative opacity-60 hover:opacity-100 transition-opacity">
-                      <DollarSign className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                      <span className="absolute left-5 top-1/2 -translate-y-1/2 text-orange-500 font-bold">
+                        Rp
+                      </span>
                       <input
                         type="number"
                         value={formData.costPrice}

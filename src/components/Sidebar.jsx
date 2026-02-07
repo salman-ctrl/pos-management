@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
-  LayoutDashboard, ShoppingCart, Users, Settings,
+  LayoutDashboard, ShoppingCart, Users, Settings, Shirt,
   ChevronDown, Box, ClipboardList, UserCircle, LogOut, Utensils
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useStore } from '../store/useStore';
 import { showAlert } from '../utils/swal';
+
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -22,8 +23,8 @@ const SidebarItem = ({ icon: Icon, label, href, hasSubmenu, isOpen, onClick }) =
   );
 
   const className = `w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group mb-1 ${isActive || (hasSubmenu && isOpen)
-      ? 'bg-orange-50 text-orange-600 font-bold'
-      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 font-medium'
+    ? 'bg-orange-50 text-orange-600 font-bold'
+    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 font-medium'
     }`;
 
   if (href) {
@@ -85,11 +86,11 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
           {/* Brand Header */}
           <div className="h-16 lg:h-20 flex items-center px-6 border-b border-gray-100 flex-shrink-0">
             <div className="w-8 h-8 lg:w-10 lg:h-10 bg-orange-500 rounded-lg lg:rounded-xl flex items-center justify-center text-white shadow-orange-200 shadow-lg flex-shrink-0 mr-3">
-              <Utensils size={20} strokeWidth={2.5} />
+              <Shirt size={20} strokeWidth={2.5} />
             </div>
             <div className="min-w-0">
-              <h1 className="text-lg font-bold leading-none tracking-tight text-gray-800 truncate">Savoria POS</h1>
-              <p className="text-[10px] text-gray-400 font-medium mt-1 uppercase tracking-wider truncate">Enterprise Suite</p>
+              <h1 className="text-lg font-bold leading-none tracking-tight text-gray-800 truncate">Nands</h1>
+              <p className="text-[10px] text-gray-400 font-medium mt-1 uppercase tracking-wider truncate">Everyday, Your Way</p>
             </div>
           </div>
 
@@ -127,6 +128,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
               <SidebarItem icon={UserCircle} label="Pelanggan" href="/customers" />
             </div>
 
+            <SidebarItem icon={Shirt} label="Kasir" href="/pos" />
             <SidebarItem icon={Settings} label="Pengaturan" href="/settings" />
           </div>
 
